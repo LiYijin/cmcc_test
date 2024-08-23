@@ -12,7 +12,6 @@ from transformers import AutoTokenizer, AutoConfig
 from transformers import BertPreTrainedModel, BertModel
 from transformers import AdamW, get_scheduler
 from transformers import BertTokenizer, BertModel, BertForSequenceClassification
-import torch_musa
 import onnxruntime as ort
 import onnxruntime.capi as ort_cap
 import torch.nn.functional as F
@@ -150,6 +149,7 @@ def test_loop(gpu_id, dataloader, model):
                 [id2label[int(p)] for (p, l) in zip(prediction, label) if l != -100]
                 for prediction, label in zip(predictions, labels)
             ]
+            batch_cnt += 1
     print(classification_report(true_labels, true_predictions, mode='strict', scheme=IOB2))
     metrics = classification_report(
       true_labels, 
