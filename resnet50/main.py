@@ -113,7 +113,7 @@ def evaluate(gpu_id, val_loader):
 
     top1_accuracy = 100. * top1_correct / total
     top5_accuracy = 100. * top5_correct / total
-    print('Device: {}, dataset size: {}, required top1: 78.00%, top1: {:.2f}%, batch size is 24, use time: {:.2f} Seconds, {:.2f} fps'.format(gpu_id, total, top1_accuracy.item(), total_time, batch_cnt * 24 / total_time))
+    print('Device: {}, fp16, dataset size: {}, required top1: 78.00%, top1: {:.2f}%, batch size is 24, use time: {:.2f} Seconds, {:.2f} fps'.format(gpu_id, total, top1_accuracy.item(), total_time, batch_cnt * 24 / total_time))
 
     # return top1_accuracy.item(), top5_accuracy.item(), total_time / batch_cnt * 1000.0, batch_cnt * 24 * 1000.0 / total_time
 
