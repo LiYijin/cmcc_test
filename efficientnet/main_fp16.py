@@ -8,6 +8,8 @@ import numpy as np
 import random
 import time
 import os
+import multiprocessing
+
 # Define transform for the input images
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
@@ -32,8 +34,8 @@ val_loader = torch.utils.data.DataLoader(
     num_workers=0,
     pin_memory=True
 )
-
-resnet_test = ort.InferenceSession("./efficientnetv2_rw_t_fp16_24.onnx", providers=['MUSAExecutionProvider'])
+resnet_test = ort.InferenceSession("./efficientnetv2_rw_t_fp16_24.onnx",
+                                   providers=[('MUSAExecutionProvider', {"prefer_nhwc": '1'})])
 #options.prefer_nhwc = 1;
 #options.hwcn_conv_weight = 1;
 

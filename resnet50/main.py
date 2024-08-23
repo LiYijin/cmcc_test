@@ -17,6 +17,7 @@ import os
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--precision', '-P',choices=['fp32', 'fp16'], help='Specify precision mode (fp32 or fp16)', required=True)
+# parser.add_argument('--gpu_id', '-id', help='Specify gpu id', required=True)
 
 args = parser.parse_args()
 
@@ -34,7 +35,8 @@ transform = transforms.Compose([
 infer_dataset = CIFAR100(root='./dataset', train=False, download=True, transform=transform)
 infer_dataset = DataLoader(dataset=infer_dataset, batch_size=24, shuffle=False)
 
-resnet_test = ort.InferenceSession("./resnet-{}.onnx".format(args.precision), providers=['MUSAExecutionProvider'])
+resnet_test = ort.InferenceSession("./resnet-{}.onnx".format(args.precision),
+                                   providers=[('MUSAExecutionProvider', {"prefer_nhwc": '1'})])
 # model = models.resnet50()
 # model_path = './resnet50_b16x8_cifar100_20210528-67b58a1b.pth'
 # checkpoint = torch.load(model_path)['state_dict']
@@ -115,6 +117,7 @@ def evaluate(gpu_id, val_loader):
 
 
 def main():
+    #evaluate(args.gpu_id, infer_dataset)
     evaluate(0, infer_dataset)
     # gpu_ids = range(1)
 
