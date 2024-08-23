@@ -9,7 +9,12 @@ import random
 import time
 import os
 import multiprocessing
+import argparse
 
+
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--gpu_id', '-id', help='Specify gpu id', required=True)
+args = parser.parse_args()
 # Define transform for the input images
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
@@ -48,6 +53,11 @@ def evaluate(gpu_id, val_loader):
     log_iter = 1000
     total_time = 0.0
     batch_cnt = 0
+    # warm up
+    for i in range(100):
+        random_input = np.random.randn(24, 3, 288, 288).astype(np.float16)
+        _ = resnet_test.run(['1354'], {'input.1': random_input})
+    # test
     for i, (inputs, targets) in enumerate(val_loader):
         if inputs.shape[0] < 24:
             last_image = inputs[-1].unsqueeze(0)
@@ -76,7 +86,7 @@ def evaluate(gpu_id, val_loader):
         print("average time: ", total_time / batch_cnt * 1000.0, "ms") 
     top1_accuracy = 100. * top1_correct / total
     top5_accuracy = 100. * top5_correct / total
-    print('Device: {}, Top-1 accuracy {}, batch size is 24, use time: {} Seconds, {} frames per seconds'.format(gpu_id, top1_accuracy.item(), total_time, batch_cnt * 24 *1000.0 / total_time))
+    print('Device: {}, fp16, dataset size: {}, required top1: 81.00%, top1: {:.2f}%, batch size is 24, use time: {:.2f} Seconds, latency: {:.2f}ms/batch, throughput: {:.2f} fps'.format(gpu_id, total, top1_accuracy.item(), total_time, 1000.0 * total_time / batch_cnt, batch_cnt * 24 / total_time))
 
     # return top1_accuracy.item(), top5_accuracy.item(), total_time / batch_cnt * 1000.0, batch_cnt * 24 * 1000.0 / total_time
 
@@ -88,7 +98,7 @@ def evaluate(gpu_id, val_loader):
 # print(f'one batch latency: {throughput:.2f} fps')
 
 def main():
-    evaluate(0, val_loader)
+    evaluate(args.gpu_id, val_loader)
     # gpu_ids = range(1)
 
     # processes = []
