@@ -58,6 +58,15 @@ def evaluate(gpu_id, val_loader):
     log_iter = 100
     total_time = 0.0
     batch_cnt = 0
+    #warm up
+    for i, (inputs, targets) in enumerate(val_loader):
+        if inputs.shape[0] < 24:
+            continue
+        np_dtype = np.float32
+        if args.precision == "fp16":
+            np_dtype = np.float16
+        outputs = resnet_test.run(['output'], {'input': np.array(inputs, dtype=np_dtype)})[0]
+
     # with torch.no_grad():
     for i, (inputs, targets) in enumerate(val_loader):
         # print(targets.size(0))
@@ -104,7 +113,7 @@ def evaluate(gpu_id, val_loader):
 
     top1_accuracy = 100. * top1_correct / total
     top5_accuracy = 100. * top5_correct / total
-    print('Device: {}, top1 accuracy: {}, batch size is 24, use time: {} Seconds, {} frames per seconds'.format(gpu_id, top1_accuracy.item(), total_time, batch_cnt * 24 / total_time))
+    print('Device: {}, dataset size: {}, required top1: 78.00%, top1: {:.2f}%, batch size is 24, use time: {:.2f} Seconds, {:.2f} fps'.format(gpu_id, total, top1_accuracy.item(), total_time, batch_cnt * 24 / total_time))
 
     # return top1_accuracy.item(), top5_accuracy.item(), total_time / batch_cnt * 1000.0, batch_cnt * 24 * 1000.0 / total_time
 
