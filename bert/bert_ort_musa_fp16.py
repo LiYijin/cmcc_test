@@ -16,6 +16,8 @@ import torch_musa
 import onnxruntime as ort
 import onnxruntime.capi as ort_cap
 import torch.nn.functional as F
+import time
+import multiprocessing
 
 class PeopleDaily(Dataset):
     def __init__(self, data_file):
@@ -101,7 +103,7 @@ tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
 categories = set()
 
-test_data = PeopleDaily('../../data/china-people-daily-ner-corpus/example.test')
+test_data = PeopleDaily('/data/china-people-daily-ner-corpus/example.test')
 
 id2label = {0:'O'}
 for c in list(sorted(categories)):
@@ -114,11 +116,12 @@ config = AutoConfig.from_pretrained(checkpoint)
 model = BertForNER.from_pretrained(checkpoint, config=config).to(device)
 
 #model.load_state_dict(torch.load("epoch_3_valid_macrof1_95.812_microf1_95.904_weights.bin"))
-bert_test = ort.InferenceSession("../../onnx_model/bert/bert_ner_fp16_64.onnx", providers=['MUSAExecutionProvider'])
+bert_test = ort.InferenceSession("./bert_ner_fp16_64.onnx", providers=['MUSAExecutionProvider'])
 
-def test_loop(dataloader, model):
+def test_loop(gpu_id, dataloader, model):
     true_labels, true_predictions = [], []
-
+    batch_cnt = 0
+    total_time = 0.0
     model.eval()
     with torch.no_grad():
         for X, y in tqdm(dataloader):
@@ -129,7 +132,10 @@ def test_loop(dataloader, model):
             padded_mask = F.pad(X['attention_mask'], padding, "constant", 0)
             padded_y = F.pad(y, padding, "constant", -100)
             padded_ids, padded_mask, y = padded_ids.to(device), padded_mask.to(device), padded_y.to(device)
+            start_time = time.time()
             pred = bert_test.run(['output'], {'input_ids': np.array(padded_ids, dtype=np.int64), 'attention_mask': np.array(padded_mask, dtype=np.int64)})
+            end_time = time.time()
+            total_time += (end_time - start_time)
             pred = torch.tensor(pred)
             pred = pred.view(-1, input_len, item_num)
             predictions = pred.argmax(dim=-1).cpu().numpy().tolist()[:ori_num]
@@ -141,17 +147,31 @@ def test_loop(dataloader, model):
                 for prediction, label in zip(predictions, labels)
             ]
     print(classification_report(true_labels, true_predictions, mode='strict', scheme=IOB2))
-    return classification_report(
+    print('Device: {}, batch size is 64, use time: {} Seconds, {} frames per seconds'.format(gpu_id, total_time, 5000 / total_time))
+    metrics = classification_report(
       true_labels, 
       true_predictions, 
       mode='strict', 
       scheme=IOB2, 
       output_dict=True
     )
+    valid_macro_f1, valid_micro_f1 = metrics['macro avg']['f1-score'], metrics['micro avg']['f1-score']
+    valid_f1 = metrics['weighted avg']['f1-score']
 
 for t in range(epoch_num):
     print(f"Epoch {t+1}/{epoch_num}\n-------------------------------")
-    metrics = test_loop(test_dataloader, model)
-    valid_macro_f1, valid_micro_f1 = metrics['macro avg']['f1-score'], metrics['micro avg']['f1-score']
-    valid_f1 = metrics['weighted avg']['f1-score']
+    gpu_ids = range(2)
+
+    processes = []
+    for gpu_id in gpu_ids:
+        p = multiprocessing.Process(target=test_loop, args=(gpu_id, test_dataloader, model))
+        processes.append(p)
+        p.start()
+
+    # 等待所有进程完成
+    for p in processes:
+        p.join()
+    # metrics = test_loop(test_dataloader, model)
+    # valid_macro_f1, valid_micro_f1 = metrics['macro avg']['f1-score'], metrics['micro avg']['f1-score']
+    # valid_f1 = metrics['weighted avg']['f1-score']
 print("Done!")
