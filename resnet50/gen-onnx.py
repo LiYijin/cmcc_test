@@ -329,9 +329,9 @@ if args.precision == "fp16":
     resnet.half()
 resnet.eval()
 
-if args.precision == "fp16" and not torch.cuda.is_available():
-    print("fp16 model can only use with cuda env!")
-    exit()
+# if args.precision == "fp16" and not torch.cuda.is_available():
+#     print("fp16 model can only use with cuda env!")
+#     exit()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 resnet.to(device)

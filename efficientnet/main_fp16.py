@@ -7,7 +7,7 @@ import onnxruntime.capi as ort_cap
 import numpy as np
 import random
 import time
-
+import os
 # Define transform for the input images
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
@@ -20,7 +20,7 @@ val_transform = transforms.Compose([
 
 # Load the ImageNet validation dataset
 val_dataset = datasets.ImageFolder(
-    '/s_liyijin/dataset-2012/val',
+    '/dataset/dataset-2012/val',
     transform=val_transform
 )
 
@@ -38,7 +38,8 @@ resnet_test = ort.InferenceSession("./efficientnetv2_rw_t_fp16_24.onnx", provide
 #options.hwcn_conv_weight = 1;
 
 # Evaluation function
-def evaluate( val_loader):
+def evaluate(gpu_id, val_loader):
+    os.environ['MUSA_VISIBLE_DEVICES'] = str(gpu_id)
     top1_correct = 0
     top5_correct = 0
     total = 0
@@ -73,11 +74,30 @@ def evaluate( val_loader):
         print("average time: ", total_time / batch_cnt * 1000.0, "ms") 
     top1_accuracy = 100. * top1_correct / total
     top5_accuracy = 100. * top5_correct / total
+    print('Device: {}, Top-1 accuracy {}, batch size is 24, use time: {} Seconds, {} frames per seconds'.format(gpu_id, top1_accuracy.item(), total_time, batch_cnt * 24 *1000.0 / total_time))
 
-    return top1_accuracy.item(), top5_accuracy.item(), total_time / batch_cnt * 1000.0
+    # return top1_accuracy.item(), top5_accuracy.item(), total_time / batch_cnt * 1000.0, batch_cnt * 24 * 1000.0 / total_time
 
-# Perform evaluation
-top1_acc, top5_acc, one_time = evaluate(val_loader)
-print(f'Top-1 accuracy: {top1_acc:.2f}%')
-print(f'Top-5 accuracy: {top5_acc:.2f}%')
-print(f'one batch latency: {one_time:.2f} ms')
+# # Perform evaluation
+# top1_acc, top5_acc, one_time, throughput = evaluate(val_loader)
+# print(f'Top-1 accuracy: {top1_acc:.2f}%')
+# print(f'Top-5 accuracy: {top5_acc:.2f}%')
+# print(f'one batch latency: {one_time:.2f} ms')
+# print(f'one batch latency: {throughput:.2f} fps')
+
+def main():
+    evaluate(0, val_loader)
+    # gpu_ids = range(1)
+
+    # processes = []
+    # for gpu_id in gpu_ids:
+    #     p = multiprocessing.Process(target=evaluate, args=(gpu_id, val_loader))
+    #     processes.append(p)
+    #     p.start()
+
+    # # 等待所有进程完成
+    # for p in processes:
+    #     p.join()
+
+if __name__ == "__main__":
+    main()

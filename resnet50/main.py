@@ -11,6 +11,9 @@ import numpy as np
 import random
 from torchvision.models import ResNet50_Weights
 import argparse
+import time
+import multiprocessing
+import os
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--precision', '-P',choices=['fp32', 'fp16'], help='Specify precision mode (fp32 or fp16)', required=True)
@@ -45,11 +48,14 @@ resnet_test = ort.InferenceSession("./resnet-{}.onnx".format(args.precision), pr
 # print(adjusted_state_dict)
 # model.load_state_dict(adjusted_state_dict)
 # model.eval()
-def evaluate( val_loader):
+def evaluate(gpu_id, val_loader):
+    os.environ['MUSA_VISIBLE_DEVICES'] = str(gpu_id)
     top1_correct = 0
     top5_correct = 0
     total = 0
     log_iter = 100
+    total_time = 0.0
+    batch_cnt = 0
     # with torch.no_grad():
     for i, (inputs, targets) in enumerate(val_loader):
         # print(targets.size(0))
@@ -67,7 +73,10 @@ def evaluate( val_loader):
         np_dtype = np.float32
         if args.precision == "fp16":
             np_dtype = np.float16
+        start_time = time.time()
         outputs = resnet_test.run(['output'], {'input': np.array(inputs, dtype=np_dtype)})[0]
+        end_time = time.time()
+        total_time += (end_time - start_time)
         outputs = torch.from_numpy(outputs.astype(np.float32))
         
         _, predicted = outputs.topk(5, 1, True, True)
@@ -83,6 +92,7 @@ def evaluate( val_loader):
         
         top1_correct += correct[:1].view(-1).float().sum(0, keepdim=True)
         top5_correct += correct[:5].reshape(-1).float().sum(0, keepdim=True)
+        batch_cnt += 1
         if i % log_iter == 0:
             top1_accuracy = 100. * top1_correct / total
             top5_accuracy = 100. * top5_correct / total
@@ -92,10 +102,31 @@ def evaluate( val_loader):
 
     top1_accuracy = 100. * top1_correct / total
     top5_accuracy = 100. * top5_correct / total
+    print('Device: {}, top1 accuracy: {}, batch size is 24, use time: {} Seconds, {} frames per seconds'.format(gpu_id, top1_accuracy.item(), total_time, batch_cnt * 24 * 1000.0  / total_time))
 
-    return top1_accuracy.item(), top5_accuracy.item()
+    # return top1_accuracy.item(), top5_accuracy.item(), total_time / batch_cnt * 1000.0, batch_cnt * 24 * 1000.0 / total_time
 
 # Perform evaluation
-top1_acc, top5_acc = evaluate(infer_dataset)
-print(f'Top-1 accuracy: {top1_acc:.2f}%')
-print(f'Top-5 accuracy: {top5_acc:.2f}%')
+# top1_acc, top5_acc, one_time, throughput = evaluate(infer_dataset)
+# print(f'Top-1 accuracy: {top1_acc:.2f}%')
+# print(f'Top-5 accuracy: {top5_acc:.2f}%')
+# print(f'one batch latency: {one_time:.2f} ms')
+# print(f'one batch latency: {throughput:.2f} fps')
+
+
+def main():
+    evaluate(0, infer_dataset)
+    # gpu_ids = range(1)
+
+    # processes = []
+    # for gpu_id in gpu_ids:
+    #     p = multiprocessing.Process(target=evaluate, args=(gpu_id, infer_dataset))
+    #     processes.append(p)
+    #     p.start()
+
+    # # 等待所有进程完成
+    # for p in processes:
+    #     p.join()
+
+if __name__ == "__main__":
+    main()
