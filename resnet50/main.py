@@ -17,7 +17,7 @@ import os
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--precision', '-P',choices=['fp32', 'fp16'], help='Specify precision mode (fp32 or fp16)', required=True)
-# parser.add_argument('--gpu_id', '-id', help='Specify gpu id', required=True)
+parser.add_argument('--gpu_id', '-id', help='Specify gpu id', required=True)
 
 args = parser.parse_args()
 
@@ -62,7 +62,7 @@ def evaluate(gpu_id, val_loader):
     for i, (inputs, targets) in enumerate(val_loader):
         # print(targets.size(0))
         if inputs.shape[0] < 24:
-            print("expand", inputs.shape)
+            #print("expand", inputs.shape)
             last_image = inputs[-1].unsqueeze(0)
             inputs = torch.cat((inputs, last_image.repeat(8, 1, 1, 1)), dim=0)
             last_tag = targets[-1].unsqueeze(0)
@@ -117,8 +117,8 @@ def evaluate(gpu_id, val_loader):
 
 
 def main():
-    #evaluate(args.gpu_id, infer_dataset)
-    evaluate(0, infer_dataset)
+    evaluate(args.gpu_id, infer_dataset)
+    # evaluate(0, infer_dataset)
     # gpu_ids = range(1)
 
     # processes = []
