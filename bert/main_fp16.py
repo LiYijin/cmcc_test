@@ -161,6 +161,6 @@ def test_loop(gpu_id, dataloader, model):
     total = batch_cnt * batch_size
     valid_macro_f1, valid_micro_f1 = metrics['macro avg']['f1-score'], metrics['micro avg']['f1-score']
     valid_f1 = metrics['weighted avg']['f1-score']
-    print('Device: {}, fp16, dataset size: {}, required micro-F1: 89.00%, micro-F1: {:.2f}%, batch size is 64, use time: {:.2f} Seconds, latency: {:.2f}ms/batch, throughput: {:.2f} fps'.format(gpu_id, total, valid_f1, total_time, 1000.0 * total_time / batch_cnt, batch_cnt * 24 / total_time))
+    print('Device: {}, fp16, dataset size: {}, required micro-F1: 89.00%, micro-F1: {:.2f}%, batch size is 64, use time: {:.2f} Seconds, latency: {:.2f}ms/batch, throughput: {:.2f} fps'.format(gpu_id, total, valid_f1 * 100, total_time, 1000.0 * total_time / batch_cnt, batch_cnt * 24 / total_time))
 
 test_loop(args.gpu_id, test_dataloader, model)
