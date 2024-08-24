@@ -6,3 +6,4 @@ onnx.save(new_onnx_model, 'ctc_24_fp16.onnx')
 
 new_onnx_model = convert_float_to_float16_model_path('transformer_lm.onnx')
 onnx.save(new_onnx_model, 'transformer_lm_fp16.onnx')
+    
