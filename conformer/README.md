@@ -18,7 +18,7 @@ python modify_onnx_decoder.py /root/.cache/espnet_onnx/conformer_test/full/xform
 /root/.cache/espnet_onnx/conformer_test/full/xformer_decoder_revise.onnx
 python modify_onnx_ctc.py /root/.cache/espnet_onnx/conformer_test/full/ctc.onnx \
 /root/.cache/espnet_onnx/conformer_test/full/ctc_dynamic.onnx
-python /root/.cache/espnet_onnx/conformer_test/full/xformer_encoder.onnx \
+python modify_onnx_encoder.py /root/.cache/espnet_onnx/conformer_test/full/xformer_encoder.onnx \
 /root/.cache/espnet_onnx/conformer_test/full/xformer_encoder_multibatch.onnx 24
 
 python convert.py #convert ctc lm to fp16, 在文件里指定模型路径
