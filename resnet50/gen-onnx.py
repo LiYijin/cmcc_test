@@ -314,8 +314,11 @@ args = parser.parse_args()
 resnet = resnet50()
 if not os.path.exists("/models/resnet50_b16x8_cifar100_20210528-67b58a1b.pth"):
     os.system(
-        "wget -o /models/resnet50_b16x8_cifar100_20210528-67b58a1b.pth https://download.openmmlab.com/mmclassification/v0/resnet/resnet50_b16x8_cifar100_20210528-67b58a1b.pth "
+        "wget https://download.openmmlab.com/mmclassification/v0/resnet/resnet50_b16x8_cifar100_20210528-67b58a1b.pth "
     )
+    os.system(
+        "cp resnet50_b16x8_cifar100_20210528-67b58a1b.pth  /models/."
+    )    
 else:
     print("Load Local PTH FILE")
 weight = torch.load('/models/resnet50_b16x8_cifar100_20210528-67b58a1b.pth')
