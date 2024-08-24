@@ -81,28 +81,28 @@ def scale_coords(img1_shape, coords, img0_shape, ratio_pad=None):
     clip_coords(coords, img0_shape)
     return coords
 
-if not os.path.exists("./annotations_trainval2017.zip"):
+if not os.path.exists("/dataset/annotations_trainval2017.zip"):
     os.system(
         "wget http://images.cocodataset.org/annotations/annotations_trainval2017.zip"
     )
 else:
     print("Use local annotation file")
 
-if not os.path.exists("./val2017.zip"):
+if not os.path.exists("/dataset/val2017.zip"):
     os.system(
         "wget http://images.cocodataset.org/zips/val2017.zip"
     )
 else:
     print("Use local val file")
 
-if not os.path.exists("./annotations"):
+if not os.path.exists("/dataset/annotations"):
     os.system(
         "unzip annotations_trainval2017.zip"
     )
 else:
     print("annotation file is already unziped")
 
-if not os.path.exists("./val2017"):
+if not os.path.exists("/dataset/val2017"):
     os.system(
         "unzip val2017.zip"
     )
@@ -118,7 +118,7 @@ def run(gpu_id):
     img_size_h = sess.get_inputs()[0].shape[2]
     img_size_w = sess.get_inputs()[0].shape[3]
     results = []
-    coco = COCO("./annotations/instances_val2017.json")
+    coco = COCO("/dataset/annotations/instances_val2017.json")
     image_ids = coco.getImgIds()
     total_time = 0.0
 
@@ -199,7 +199,7 @@ def run(gpu_id):
     mAP_50 = coco_eval.stats[1]
     total = 5000
     batch_cnt = int(total / 24) + 1
-    print('Device: {}, fp16, dataset size: {}, required mAP: 62.00%, mAP: {:.2f}%, batch size is 24, use time: {:.2f} Seconds, latency: {:.2f}ms/batch, throughput: {:.2f} fps'.format(gpu_id, total, mAP_50 * 100, total_time, 1000.0 * total_time / batch_cnt, total / total_time))
+    print('Device: {}\ndata type: fp16\ndataset size: {}\nrequired mAP: 62.00%, mAP: {:.2f}%\nbatch size is 24\nuse time: {:.2f} Seconds\nlatency: {:.2f}ms/batch\nthroughput: {:.2f} fps'.format(gpu_id, total, mAP_50 * 100, total_time, 1000.0 * total_time / batch_cnt, total / total_time))
 
 
 def main():
