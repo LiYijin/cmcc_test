@@ -312,13 +312,13 @@ parser.add_argument('--precision', '-P', choices=['fp32', 'fp16'], help='Specify
 args = parser.parse_args()
 
 resnet = resnet50()
-if not os.path.exists("./resnet50_b16x8_cifar100_20210528-67b58a1b.pth"):
+if not os.path.exists("/models/resnet50_b16x8_cifar100_20210528-67b58a1b.pth"):
     os.system(
         "wget https://download.openmmlab.com/mmclassification/v0/resnet/resnet50_b16x8_cifar100_20210528-67b58a1b.pth"
     )
 else:
     print("Load Local PTH FILE")
-weight = torch.load('./resnet50_b16x8_cifar100_20210528-67b58a1b.pth')
+weight = torch.load('/models/resnet50_b16x8_cifar100_20210528-67b58a1b.pth')
 
 
 params = {k.replace('backbone.',''):v for k,v in weight['state_dict'].items()}
