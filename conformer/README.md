@@ -27,7 +27,7 @@ python modify_onnx_encoder.py /root/.cache/espnet_onnx/conformer_test/full/xform
 python convert.py #convert ctc lm to fp16, 在文件里指定模型路径
 
 修改${HOME}/.cache/espnet_onnx/conformer_test目录下config配置文件参数，
-以及修改对应的weight参数中的ctc, decoder, lm文件路径。
+以及修改对应的weight参数中的ctc, decoder, lm文件路径。设置beam size的大小为2;
 
 ./run.sh
 ```

@@ -356,7 +356,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ASVspoof detection system")
     parser.add_argument("--dataset_path", default='/workspace/ort-musa-workspace/workspace/espnet/test/S0768/', type=str, help="datapath")
     parser.add_argument('--model_path', default="/root/.cache/espnet_onnx/chenao_conformer", type=str, help='path to the om model and config')
-    parser.add_argument('--result_path', default="om_all_musa_fp16.txt", type=str, help='path to result')
+    parser.add_argument('--result_path', default="om_all_beam_size.txt", type=str, help='path to result')
     parser.add_argument('--unsplit', action='store_true', help='enable unsplit mode')
     parser.add_argument('--batch', default=4, type=int, help='batch size of asr process')
     parser.add_argument('--batch_encoder', default=4, type=int, help='batch size  of encode process')
