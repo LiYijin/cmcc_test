@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 import random
@@ -11,17 +10,27 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer, AutoConfig
 from transformers import BertPreTrainedModel, BertModel
 from transformers import AdamW, get_scheduler
-from transformers import BertTokenizer, BertModel, BertForSequenceClassification
-import onnxruntime as ort
-import onnxruntime.capi as ort_cap
-import torch.nn.functional as F
-import time
-import argparse
 
+learning_rate = 1e-5
+batch_size = 64
+epoch_num = 3
 
-parser = argparse.ArgumentParser(description='Process some integers.')
-parser.add_argument('--gpu_id', '-id', help='Specify gpu id', required=True)
-args = parser.parse_args()
+seed = 7
+torch.manual_seed(seed)
+# torch.musa.manual_seed(seed)
+# torch.musa.manual_seed_all(seed)
+random.seed(seed)
+np.random.seed(seed)
+os.environ['PYTHONHASHSEED'] = str(seed)
+
+device = 'cpu'
+print(f'Using {device} device')
+
+checkpoint = "bert-base-chinese"
+tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+
+categories = set()
+
 class PeopleDaily(Dataset):
     def __init__(self, data_file):
         self.data = self.load_data(data_file)
@@ -54,6 +63,16 @@ class PeopleDaily(Dataset):
     def __getitem__(self, idx):
         return self.data[idx]
 
+train_data = PeopleDaily('/dataset/china-people-daily-ner-corpus/example.train')
+valid_data = PeopleDaily('/dataset/china-people-daily-ner-corpus/example.dev')
+test_data = PeopleDaily('/dataset/china-people-daily-ner-corpus/example.test')
+
+id2label = {0:'O'}
+for c in list(sorted(categories)):
+    id2label[len(id2label)] = f"B-{c}"
+    id2label[len(id2label)] = f"I-{c}"
+label2id = {v: k for k, v in id2label.items()}
+
 def collote_fn(batch_samples):
     batch_sentence, batch_labels  = [], []
     for sample in batch_samples:
@@ -77,6 +96,10 @@ def collote_fn(batch_samples):
             batch_label[s_idx][token_start+1:token_end+1] = label2id[f"I-{tag}"]
     return batch_inputs, torch.tensor(batch_label)
 
+train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, collate_fn=collote_fn)
+valid_dataloader = DataLoader(valid_data, batch_size=batch_size, shuffle=False, collate_fn=collote_fn)
+test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=False, collate_fn=collote_fn)
+
 class BertForNER(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
@@ -92,86 +115,86 @@ class BertForNER(BertPreTrainedModel):
         logits = self.classifier(sequence_output)
         return logits
 
-
-batch_size = 64
-input_len = 256
-epoch_num = 1
-item_num = 7
-
-device = 'cpu'
-print(f'Using {device} device')
-
-checkpoint = "bert-base-chinese"
-tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-
-categories = set()
-
-test_data = PeopleDaily('/dataset/china-people-daily-ner-corpus/example.test')
-
-id2label = {0:'O'}
-for c in list(sorted(categories)):
-    id2label[len(id2label)] = f"B-{c}"
-    id2label[len(id2label)] = f"I-{c}"
-label2id = {v: k for k, v in id2label.items()}
-
-test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=False, collate_fn=collote_fn)
 config = AutoConfig.from_pretrained(checkpoint)
 model = BertForNER.from_pretrained(checkpoint, config=config).to(device)
 
-#model.load_state_dict(torch.load("epoch_3_valid_macrof1_95.812_microf1_95.904_weights.bin"))
-if not os.path.exists("./bert_ner_fp16_64.onnx"):
-    os.system(
-        "cp /models/bert_ner_fp16_64.onnx ."
-    )
-bert_test = ort.InferenceSession("./bert_ner_fp16_64.onnx", providers=['MUSAExecutionProvider'])
+def train_loop(dataloader, model, loss_fn, optimizer, lr_scheduler, epoch, total_loss):
+    progress_bar = tqdm(range(len(dataloader)))
+    progress_bar.set_description(f'loss: {0:>7f}')
+    finish_batch_num = (epoch-1) * len(dataloader)
+    
+    model.train()
+    for batch, (X, y) in enumerate(dataloader, start=1):
+        X, y = X.to(device), y.to(device)
+        pred = model(X)
+        loss = loss_fn(pred.permute(0, 2, 1), y)
 
-def test_loop(gpu_id, dataloader, model):
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        lr_scheduler.step()
+
+        total_loss += loss.item()
+        progress_bar.set_description(f'loss: {total_loss/(finish_batch_num + batch):>7f}')
+        progress_bar.update(1)
+    return total_loss
+
+def test_loop(dataloader, model):
     true_labels, true_predictions = [], []
-    batch_cnt = 0
-    total_time = 0.0
+
     model.eval()
     with torch.no_grad():
-        # warm up
-        for i in range(100):
-            random_input = np.random.randint(2, size=(64, 256),  dtype=np.int64)
-            pred = bert_test.run(['output'], {'input_ids':random_input, 'attention_mask': random_input})
-
         for X, y in tqdm(dataloader):
-            target_size = (batch_size, input_len)
-            ori_num = X["input_ids"].size(0)
-            #print("size ", target_size[1] - X["input_ids"].size(1), "size 2", target_size[0] - X["input_ids"].size(0))
-            padding = (0, target_size[1] - X["input_ids"].size(1), 0, target_size[0] - X["input_ids"].size(0))
-            padded_ids = F.pad(X["input_ids"], padding, "constant", 0)
-            padded_mask = F.pad(X['attention_mask'], padding, "constant", 0)
-            padded_y = F.pad(y, padding, "constant", -100)
-            padded_ids, padded_mask, y = padded_ids.to(device), padded_mask.to(device), padded_y.to(device)
-            start_time = time.time()
-            pred = bert_test.run(['output'], {'input_ids': np.array(padded_ids, dtype=np.int64), 'attention_mask': np.array(padded_mask, dtype=np.int64)})
-            end_time = time.time()
-            total_time += (end_time - start_time)
-            pred = torch.tensor(pred)
-            pred = pred.view(-1, input_len, item_num)
-            predictions = pred.argmax(dim=-1).cpu().numpy().tolist()[:ori_num]
-
-            labels = y.cpu().numpy().tolist()[:ori_num]
+            X, y = X.to(device), y.to(device)
+            pred = model(X)
+            predictions = pred.argmax(dim=-1).cpu().numpy().tolist()
+            labels = y.cpu().numpy().tolist()
             true_labels += [[id2label[int(l)] for l in label if l != -100] for label in labels]
             true_predictions += [
                 [id2label[int(p)] for (p, l) in zip(prediction, label) if l != -100]
                 for prediction, label in zip(predictions, labels)
             ]
-            batch_cnt += 1
     print(classification_report(true_labels, true_predictions, mode='strict', scheme=IOB2))
-    metrics = classification_report(
+    return classification_report(
       true_labels, 
       true_predictions, 
       mode='strict', 
       scheme=IOB2, 
       output_dict=True
     )
-    total = batch_cnt * batch_size
-    dataset_size = 4636
+
+loss_fn = nn.CrossEntropyLoss()
+optimizer = AdamW(model.parameters(), lr=learning_rate)
+lr_scheduler = get_scheduler(
+    "linear",
+    optimizer=optimizer,
+    num_warmup_steps=0,
+    num_training_steps=epoch_num*len(train_dataloader),
+)
+
+total_loss = 0.
+best_f1 = 0.
+for t in range(epoch_num):
+    print(f"Epoch {t+1}/{epoch_num}\n-------------------------------")
+    total_loss = train_loop(train_dataloader, model, loss_fn, optimizer, lr_scheduler, t+1, total_loss)
+    metrics = test_loop(valid_dataloader, model)
     valid_macro_f1, valid_micro_f1 = metrics['macro avg']['f1-score'], metrics['micro avg']['f1-score']
     valid_f1 = metrics['weighted avg']['f1-score']
-    print('Device: {}\ndata type: fp16\ndataset size: {}\nrequired micro-F1: 89.00%, micro-F1: {:.2f}%\nbatch size is 64\nuse time: {:.2f} Seconds\nlatency: {:.2f}ms/batch\nthroughput: {:.2f} fps'.format(gpu_id, dataset_size, valid_f1 * 100, total_time, 1000.0 * total_time / batch_cnt, batch_cnt * 24 / total_time))
+    if valid_f1 > best_f1:
+        best_f1 = valid_f1
+        print('saving new weights...\n')
+        torch.save(
+            model.state_dict(), 
+            f'epoch_{t+1}_valid_macrof1_{(100*valid_macro_f1):0.3f}_microf1_{(100*valid_micro_f1):0.3f}_weights.bin'
+        )
+print("Done!")
 
-test_loop(args.gpu_id, test_dataloader, model)
+#model = model.half()
+onnx_name = "bert_ner_fp32_64.onnx"
+random_input = torch.randint(0, 100, (2, batch_size, 256)).to(device)
+inputs = {
+    'input_ids': random_input[0],
+    'attention_mask': random_input[1]
+}
+
+torch.onnx.export(model, inputs, onnx_name, verbose=False, opset_version=17, do_constant_folding=True, input_names = ['input_ids', 'attention_mask'], output_names=['output'])

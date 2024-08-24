@@ -26,6 +26,7 @@ import librosa
 from math import ceil
 import psutil
 from preprocess import Preprocessor
+import subprocess
 
 PRE_PROCESSORS = {}
 
@@ -106,7 +107,6 @@ def generate_batch_data(data_list, map_names, batch_num, device_ids, num_process
             packed_name.append(_n)
         return packed_data, packed_name
 
-    print(batch_num)
     data_list = flat(data_list)
     map_names = flat(map_names)
     if len(data_list) != len(map_names):
@@ -155,7 +155,6 @@ def generate_batch_data(data_list, map_names, batch_num, device_ids, num_process
 
 
 def infer_multi(data_pack, mode='default'):
-    print(mode)
     if args.bink_cpu:
         cpu_id, device_id, data_list, map_names = data_pack
         p = psutil.Process(os.getpid())
@@ -259,7 +258,6 @@ def speech_preprocess(batch, num_process, device_ids, shuffle=False):
 
 
 def process_unsplited():
-    print("unsplited")
     infer_func = partial(infer_multi)
     sample_num = 0
     data_list, map_names = load_data(args.dataset_path)
@@ -287,8 +285,7 @@ def process_unsplited():
     print(f"total: {total_fps}wav/second")
 
 
-def process_splited():
-    print("splited")
+def process_splited(device_id : int):
     # encode process
     infer_encoder = partial(infer_multi, mode='encoder')
     sample_num = 0
@@ -331,14 +328,28 @@ def process_splited():
     res = [res[idx] for idx in range(len(res)) if name_list[idx] != "Unvalid data"]
     name_list = [name for name in name_list if name != "Unvalid data"]
     out_list = [f"{name_list[i]} {res[i]}\n" for i in range(len(res))]
+
+    file_name = f'om_{device_id}.txt'
+    dump_result(file_name, out_list)
+    script_path = "compute-wer.py"
+    char_value = '--char=1'
+    verbosity_value = '--v=1'
+    text_value = 'text'
+    result = subprocess.run(['python', script_path, char_value, verbosity_value, text_value, file_name], capture_output=True, text=True)
+    overall_wer = []
+    match = re.search(r"Overall -> (\d+\.\d+) %", line)
+    if match:
+        overall_wer = match.group(1)  # 提取 "Overall" 行中的数值
     encoder_duration = cost_en / args.num_process_encoder
     decoder_duration = cost_de / args.num_process_decoder
     total_fps = sample_num / (encoder_duration + decoder_duration)
+    print(f"divece id:{device_id}")
     print(f"sample_num:{sample_num}")
     print(f"encoder: {sample_num/encoder_duration}wav/second")
     print(f"decoder: {sample_num/decoder_duration}wav/second")
     print(f"total: {total_fps}wav/second")
-    dump_result(args.result_path, out_list)
+    print(f"acc: {100 - float(overall_wer)}%")
+    
 
 
 if __name__ == "__main__":
@@ -354,7 +365,8 @@ if __name__ == "__main__":
     parser.add_argument('--num_process_encoder', default=16, type=int, help='num of encode process')
     parser.add_argument('--num_process_decoder', default=17, type=int, help='num of decode process')
     parser.add_argument('--shuffle', default=True, type=bool, help='data shuffle')
-    parser.add_argument('--device_ids', default='0', type=str, help='device ids for NPU infer')
+    parser.add_argument('--device_ids', default='0', type=str, help='device for TP')
+    parser.add_argument('--d_id', default='0', type=str, help='for MUSA infer')
     parser.add_argument('--rank_encoder_mode', default=True, type=bool, help='enable rank mode for encoder model')
     parser.add_argument('--bink_cpu', action='store_true', help='enable bink cpu in multiprocessing mode')
     parser.add_argument('--seed', default=123, type=int, help='seed for data shuffle')
@@ -362,6 +374,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     np.random.seed(args.seed)
     args.device_ids = [int(_) for _ in args.device_ids.split(",")]
+    args.d_id = [int(_) for _ in args.device_ids.split(",")]
     manager = Manager()
     sync_num = manager.list()
     config_path = os.path.join(args.model_path, "config.yaml")
@@ -372,6 +385,6 @@ if __name__ == "__main__":
     )
 
     if not args.unsplit:
-        process_splited()
+        process_splited(args.d_id)
     else:
         process_unsplited()

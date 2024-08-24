@@ -1,16 +1,8 @@
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om0.txt --device_id 0 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om1.txt --device_id 1 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om2.txt --device_id 2 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om3.txt --device_id 3 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om4.txt --device_id 4 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om5.txt --device_id 5 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om6.txt --device_id 6 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om7.txt --device_id 7 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om8.txt --device_id 8 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om9.txt --device_id 9 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om10.txt --device_id 10 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om11.txt --device_id 11 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om12.txt --device_id 12 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om13.txt --device_id 13 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om14.txt --device_id 14 &
-python3 om_val.py --dataset_path /test --model_path /root/.cache/espnet_onnx/asr_train_asr_qkv --result_path om15.txt --device_id 15 &
+MUSA_VISIBLE_DEVICES=0 python om_val.py --dataset_path ${dataset_path}/wav/test --model_path ${HOME}/.cache/espnet_onnx/conformer_test --batch_encoder 24 --batch_decoder 24  --num_process_encoder 1 --num_process_decoder 1 --d_id 0 &
+MUSA_VISIBLE_DEVICES=1 python om_val.py --dataset_path ${dataset_path}/wav/test --model_path ${HOME}/.cache/espnet_onnx/conformer_test --batch_encoder 24 --batch_decoder 24  --num_process_encoder 1 --num_process_decoder 1 --d_id 1 &
+MUSA_VISIBLE_DEVICES=2 python om_val.py --dataset_path ${dataset_path}/wav/test --model_path ${HOME}/.cache/espnet_onnx/conformer_test --batch_encoder 24 --batch_decoder 24  --num_process_encoder 1 --num_process_decoder 1 --d_id 2 &
+MUSA_VISIBLE_DEVICES=3 python om_val.py --dataset_path ${dataset_path}/wav/test --model_path ${HOME}/.cache/espnet_onnx/conformer_test --batch_encoder 24 --batch_decoder 24  --num_process_encoder 1 --num_process_decoder 1 --d_id 3 &
+MUSA_VISIBLE_DEVICES=4 python om_val.py --dataset_path ${dataset_path}/wav/test --model_path ${HOME}/.cache/espnet_onnx/conformer_test --batch_encoder 24 --batch_decoder 24  --num_process_encoder 1 --num_process_decoder 1 --d_id 4 &
+MUSA_VISIBLE_DEVICES=5 python om_val.py --dataset_path ${dataset_path}/wav/test --model_path ${HOME}/.cache/espnet_onnx/conformer_test --batch_encoder 24 --batch_decoder 24  --num_process_encoder 1 --num_process_decoder 1 --d_id 5 &
+MUSA_VISIBLE_DEVICES=6 python om_val.py --dataset_path ${dataset_path}/wav/test --model_path ${HOME}/.cache/espnet_onnx/conformer_test --batch_encoder 24 --batch_decoder 24  --num_process_encoder 1 --num_process_decoder 1 --d_id 6 &
+MUSA_VISIBLE_DEVICES=7 python om_val.py --dataset_path ${dataset_path}/wav/test --model_path ${HOME}/.cache/espnet_onnx/conformer_test --batch_encoder 24 --batch_decoder 24  --num_process_encoder 1 --num_process_decoder 1 --d_id 7 &
