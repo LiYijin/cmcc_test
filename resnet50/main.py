@@ -32,7 +32,7 @@ transform = transforms.Compose([
 ])
 
 # 加载训练集
-infer_dataset = CIFAR100(root='./dataset', train=False, download=True, transform=transform)
+infer_dataset = CIFAR100(root='/dataset', train=False, download=True, transform=transform)
 infer_dataset = DataLoader(dataset=infer_dataset, batch_size=24, shuffle=False)
 
 resnet_test = ort.InferenceSession("./resnet-{}.onnx".format(args.precision),
