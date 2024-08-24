@@ -17,13 +17,15 @@ from espnet_onnx.utils.function import (
     make_pad_mask,
     mask_fill
 )
-from ais_bench.infer.interface import InferSession
+# from ais_bench.infer.interface import InferSession
 import time
+import onnxruntime
 
 
 ######################################
 # Inference interface for Ascned NPU #
 ######################################
+
 class AscendInferSession:
     def __init__(self, device_id, config, mode='dymshape', model_path=None, fp16=False):
         self.mode = mode
@@ -32,7 +34,7 @@ class AscendInferSession:
         self.config = config
         if model_path is None:
             model_path = config.model_path
-        self.model = InferSession(device_id, model_path)
+        self.model = onnxruntime.InferenceSession(model_path, providers = ['CPUExecutionProvider'])
         self.fp16 = fp16
         self.time = 0
 
@@ -46,10 +48,70 @@ class AscendInferSession:
             result =  self.model.infer(datas)
             et = time.time()
         else:
+            sess_inputs={}
+            for i, d in enumerate(datas):
+                # datas[i].astype(np.float32)
+                data_fp32 = []
+                if datas[i].dtype == np.float32:
+                    data_fp32 = datas[i].astype(np.float16)
+                else:
+                    data_fp32 =  datas[i]
+                # print(self.model.get_inputs()[i].name, data_fp32.shape)
+                sess_inputs[f"{self.model.get_inputs()[i].name}"] = data_fp32
+                # print(data_fp32.dtype)
+
             st = time.time()
-            result = self.model.infer(datas,
-                                    mode=self.mode,
-                                    custom_sizes=self.config.output_size)
+            result = self.model.run(None, sess_inputs)
+            et = time.time()
+        self.time += et - st
+        return result
+
+    def run(self, out_names, input_dict):
+        datas = list(input_dict.values())
+        return self.run_sequence(datas)
+
+    def get_inputs(self):
+        return self.model.get_inputs()
+
+    def get_outputs(self):
+        return self.model.get_outputs()
+    
+class CTCInferSession:
+    def __init__(self, device_id, config, mode='dymshape', model_path=None, fp16=False):
+        self.mode = mode
+        if mode not in ["static", "dymdims", "dymshape"]:
+            raise NotImplementedError(f"Only support: static/dymshape/dymdims, but now: {self.mode}")
+        self.config = config
+        if model_path is None:
+            model_path = config.model_path
+        self.model = onnxruntime.InferenceSession(model_path, providers = ['MUSAExecutionProvider'])
+        self.fp16 = fp16
+        self.time = 0
+
+    def run_sequence(self, datas):
+        if self.fp16:
+            for idx, d in enumerate(datas):
+                if d.dtype == np.float32:
+                    datas[idx] = d.astype("float16")
+        if self.mode == "static":
+            st = time.time()
+            result =  self.model.infer(datas)
+            et = time.time()
+        else:
+            sess_inputs={}
+            for i, d in enumerate(datas):
+                # datas[i].astype(np.float32)
+                data_fp32 = []
+                if datas[i].dtype == np.float32:
+                    data_fp32 = datas[i].astype(np.float16)
+                else:
+                    data_fp32 =  datas[i]
+                # print(self.model.get_inputs()[i].name, data_fp32.shape)
+                sess_inputs[f"{self.model.get_inputs()[i].name}"] = data_fp32
+                # print(data_fp32.dtype)
+
+            st = time.time()
+            result = self.model.run(None, sess_inputs)
             et = time.time()
         self.time += et - st
         return result
@@ -64,7 +126,160 @@ class AscendInferSession:
     def get_outputs(self):
         return self.model.get_outputs()
 
+class LMInferSession:
+    def __init__(self, device_id, config, mode='dymshape', model_path=None, fp16=False):
+        self.mode = mode
+        if mode not in ["static", "dymdims", "dymshape"]:
+            raise NotImplementedError(f"Only support: static/dymshape/dymdims, but now: {self.mode}")
+        self.config = config
+        if model_path is None:
+            model_path = config.model_path
+        self.model = onnxruntime.InferenceSession(model_path, providers = ['MUSAExecutionProvider'])
+        self.fp16 = fp16
+        self.time = 0
 
+    def run_sequence(self, datas):
+        if self.fp16:
+            for idx, d in enumerate(datas):
+                if d.dtype == np.float32:
+                    datas[idx] = d.astype("float16")
+        if self.mode == "static":
+            st = time.time()
+            result =  self.model.infer(datas)
+            et = time.time()
+        else:
+            sess_inputs={}
+            for i, d in enumerate(datas):
+                # datas[i].astype(np.float32)
+                data_fp32 = []
+                if datas[i].dtype == np.float32:
+                    data_fp32 = datas[i].astype(np.float16)
+                else:
+                    data_fp32 =  datas[i]
+                # print(self.model.get_inputs()[i].name, data_fp32.shape)
+                sess_inputs[f"{self.model.get_inputs()[i].name}"] = data_fp32
+                # print(data_fp32.dtype)
+
+            st = time.time()
+            # print("LM------------------")
+            result = self.model.run(None, sess_inputs)
+            et = time.time()
+        self.time += et - st
+        return result
+
+    def run(self, out_names, input_dict):
+        datas = list(input_dict.values())
+        return self.run_sequence(datas)
+
+    def get_inputs(self):
+        return self.model.get_inputs()
+
+    def get_outputs(self):
+        return self.model.get_outputs()
+
+class DecoderInferSession:
+    def __init__(self, device_id, config, mode='dymshape', model_path=None, fp16=False):
+        self.mode = mode
+        if mode not in ["static", "dymdims", "dymshape"]:
+            raise NotImplementedError(f"Only support: static/dymshape/dymdims, but now: {self.mode}")
+        self.config = config
+        if model_path is None:
+            model_path = config.model_path
+        self.model = onnxruntime.InferenceSession(model_path, providers = ['MUSAExecutionProvider'])
+        self.fp16 = fp16
+        self.time = 0
+
+    def run_sequence(self, datas):
+        if self.fp16:
+            for idx, d in enumerate(datas):
+                if d.dtype == np.float32:
+                    datas[idx] = d.astype("float16")
+        if self.mode == "static":
+            st = time.time()
+            result =  self.model.infer(datas)
+            et = time.time()
+        else:
+            sess_inputs={}
+            for i, d in enumerate(datas):
+                # datas[i].astype(np.float32)
+                data_fp32 = []
+                if datas[i].dtype == np.float16:
+                    data_fp32 = datas[i].astype(np.float32)
+                else:
+                    data_fp32 =  datas[i]
+                # print(self.model.get_inputs()[i].name, data_fp32.shape)
+                sess_inputs[f"{self.model.get_inputs()[i].name}"] = data_fp32
+                # print(data_fp32.dtype)
+
+            st = time.time()
+            # print("decoder-------------")
+            result = self.model.run(None, sess_inputs)
+            et = time.time()
+        self.time += et - st
+        return result
+
+    def run(self, out_names, input_dict):
+        datas = list(input_dict.values())
+        return self.run_sequence(datas)
+
+    def get_inputs(self):
+        return self.model.get_inputs()
+
+    def get_outputs(self):
+        return self.model.get_outputs()
+    
+
+class MusaInferSession:
+    def __init__(self, device_id, config, mode='dymshape', model_path=None, fp16=False):
+        self.mode = mode
+        if mode not in ["static", "dymdims", "dymshape"]:
+            raise NotImplementedError(f"Only support: static/dymshape/dymdims, but now: {self.mode}")
+        self.config = config
+        if model_path is None:
+            model_path = config.model_path
+        self.model = onnxruntime.InferenceSession(model_path, providers = ['MUSAExecutionProvider'])
+        # print("cpu")
+        self.fp16 = fp16
+        self.time = 0
+
+    def run_sequence(self, datas):
+        if self.fp16:
+            for idx, d in enumerate(datas):
+                if d.dtype == np.float32:
+                    datas[idx] = d.astype("float16")
+        if self.mode == "static":
+            st = time.time()
+            result =  self.model.infer(datas)
+            et = time.time()
+        else:
+            sess_inputs={}
+            for i, d in enumerate(datas):
+                # datas[i].astype(np.float32)
+                data_fp32 = []
+                if datas[i].dtype == np.float16:
+                    data_fp32 = datas[i].astype(np.float32)
+                else:
+                    data_fp32 =  datas[i]
+                # print(self.model.get_inputs()[i].name, data_fp32.shape)
+                sess_inputs[f"{self.model.get_inputs()[i].name}"] = data_fp32
+                # print(data_fp32.dtype)
+
+            st = time.time()
+            result = self.model.run(None, sess_inputs)
+            et = time.time()
+        self.time += et - st
+        return result
+
+    def run(self, out_names, input_dict):
+        datas = list(input_dict.values())
+        return self.run_sequence(datas)
+
+    def get_inputs(self):
+        return self.model.get_inputs()
+
+    def get_outputs(self):
+        return self.model.get_outputs()
+    
 ####################################
 # Added function for npu inference #
 ####################################
@@ -84,7 +299,7 @@ def ctcprefixscorer_npu_init(func):
             self = args[0]
             ctc = args[1]
             eos = args[2]
-            self.ctc = AscendInferSession(kwargs['device_id'], ctc, fp16=kwargs['fp16'])
+            self.ctc = CTCInferSession(kwargs['device_id'], ctc, fp16=kwargs['fp16'])
             self.eos = eos
             self.impl = None
         else:
@@ -138,7 +353,7 @@ def encoder_npu_call(func):
             feats, feat_length, mask, pos_mask, conv_mask, encoder_out_lens = datas
             outputs = self.encoder.run_sequence([feats, mask, pos_mask, conv_mask])
             encoder_out = outputs[0]
-
+            # print(encoder_out.shape)
             if self.config.enc_type == 'RNNEncoder':
                 encoder_out = mask_fill(encoder_out, make_pad_mask(
                     feat_length, encoder_out, 1), 0.0)
@@ -159,9 +374,9 @@ def build_encoder_npu_model(func):
             self.rank_mode = kwargs['rank_mode']
             self.disable_preprocess = kwargs['disable_preprocess']
             if self.rank_mode:
-                self.encoder = AscendInferSession(kwargs['device_id'], self.config, fp16=kwargs['fp16'], mode='dymdims')
+                self.encoder = MusaInferSession(kwargs['device_id'], self.config, fp16=kwargs['fp16'], mode='dymdims')
             else:
-                self.encoder = AscendInferSession(kwargs['device_id'], self.config, fp16=kwargs['fp16'])
+                self.encoder = MusaInferSession(kwargs['device_id'], self.config, fp16=kwargs['fp16'])
         else:
             func(*args, **kwargs)
     return wrapper
@@ -173,7 +388,7 @@ def build_decoder_npu_model(func):
         if 'use_npu' in kwargs:
             self = args[0]
             self.config = args[1]
-            self.decoder = AscendInferSession(kwargs['device_id'], self.config, fp16=kwargs['fp16'])
+            self.decoder = DecoderInferSession(kwargs['device_id'], self.config, fp16=kwargs['fp16'])
             self.n_layers = self.config.n_layers
             self.odim = self.config.odim
             self.in_caches = [d.name for d in self.decoder.get_inputs()
@@ -192,6 +407,7 @@ def build_joint_network_npu_model(func):
             self = args[0]
             self.config = args[1]
             self.joint_session = AscendInferSession(kwargs['device_id'], self.config, fp16=kwargs['fp16'])
+            # print("joint")
         else:
             func(*args, **kwargs)
     return wrapper
@@ -203,7 +419,7 @@ def build_transformer_lm_npu_model(func):
         if 'use_npu' in kwargs:
             self = args[0]
             self.config = args[1]
-            self.lm_session = AscendInferSession(kwargs['device_id'], self.config, fp16=kwargs['fp16'])
+            self.lm_session = LMInferSession(kwargs['device_id'], self.config, fp16=kwargs['fp16'])
             self.enc_output_names = ['y'] \
                 + [d.name for d in self.lm_session.get_outputs() if 'cache' in d.name]
             self.enc_in_cache_names = [
