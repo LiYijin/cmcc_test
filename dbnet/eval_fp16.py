@@ -34,7 +34,8 @@ def main():
 
     # sess_options.optimized_model_filepath = "opt.onnx"
     
-    sess = ort.InferenceSession("./model/dbnet-fp16.onnx", sess_options=sess_options, providers=['MUSAExecutionProvider'])
+    sess = ort.InferenceSession("./model/dbnet-fp16.onnx", sess_options=sess_options, 
+                                providers=[('MUSAExecutionProvider', {"prefer_nhwc": '1'})])
     global_config = config["Global"]
     dataset = eval("SimpleDataSet")(config, "Eval", logger, None)
     eval_class = build_metric(config["Metric"])
@@ -75,6 +76,11 @@ def main():
             total=len(valid_dataloader), desc="eval model:", position=0, leave=True
         )
     #infer 
+    # warm up
+    for _ in range(2):
+        random_input = np.random.randn(24, 3, 736, 1280).astype(np.float16)
+        outputs = sess.run(None, {input_name: random_input.astype(np.float16)})[0]
+     
     total_time = 0.0
     for idx, images in enumerate(valid_dataloader):
         size_out = images.shape[0]
@@ -85,8 +91,9 @@ def main():
             additional_array = np.random.rand(4, 3, 736, 1280).astype(np.float32)
             images = np.concatenate((images, additional_array), axis=0)
         batch_cnt += 1
+        images = ort.OrtValue.ortvalue_from_numpy(images.astype(np.float16))
         start_time = time.time()
-        outputs = sess.run(None, {input_name: images.astype(np.float16)})[0]
+        outputs = sess.run(None, {input_name: images})[0]
         end_time = time.time()
         total_time += (end_time  - start_time)
         outputs = outputs.astype(np.float32)
