@@ -3,7 +3,7 @@ import os
 import time
 import timm
 
-if not os.path.exists("./efficientnetv2_t_agc-3620981a.pth"):
+if not os.path.exists("/models/efficientnetv2_t_agc-3620981a.pth"):
     os.system(
         "wget https://github.com/huggingface/pytorch-image-models/releases/download/v0.1-weights/efficientnetv2_t_agc-3620981a.pth"
     )
@@ -11,7 +11,7 @@ else:
     print("Load Local PTH FILE")
 
 efficientnet=timm.create_model('efficientnetv2_rw_t', pretrained=False, num_classes=1000)
-efficientnet.load_state_dict(torch.load("./efficientnetv2_t_agc-3620981a.pth"))
+efficientnet.load_state_dict(torch.load("/models/efficientnetv2_t_agc-3620981a.pth"))
 efficientnet = efficientnet.half()
 efficientnet.eval()
 
