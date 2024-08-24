@@ -64,8 +64,9 @@ def evaluate(gpu_id, val_loader):
             inputs = torch.cat((inputs, last_image.repeat(16, 1, 1, 1)), dim=0)
             last_tag = targets[-1].unsqueeze(0)
             targets = torch.cat((targets, last_tag.repeat(16)), dim=0)
+        input_test =  ort.OrtValue.ortvalue_from_numpy(np.ascontiguousarray(np.array(inputs, dtype=np.float16)))
         start_time = time.time()
-        outputs = resnet_test.run(['1354'], {'input.1': np.array(inputs, dtype=np.float16)})[0]
+        outputs = resnet_test.run(['1354'], {'input.1': input_test})[0]
         end_time = time.time()
         total_time += (end_time - start_time)
         outputs = outputs.astype(float)
