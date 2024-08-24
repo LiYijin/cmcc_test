@@ -12,6 +12,14 @@ from utils.general import non_max_suppression
 import numpy as np
 import cv2
 import os
+import time
+
+import argparse 
+
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--gpu_id', '-id', help='Specify gpu id', required=True)
+args = parser.parse_args()
+
 def letterbox(im, new_shape=(640, 640), color=(114, 114, 114), auto=False, scaleFill=False, scaleup=True, stride=32):
     """Resizes and pads image to new_shape with stride-multiple constraints, returns resized image, ratio, padding."""
     shape = im.shape[:2]  # current shape [height, width]
@@ -189,21 +197,12 @@ def run(gpu_id):
     coco_eval.summarize()
 
     mAP_50 = coco_eval.stats[1]
-    print('Device: {}, mAP@0.5: {}, batch size is 24, use time: {} Seconds, {} prctures per seconds'.format(gpu_id, mAP_50, total_time, 5000 / total_time))
+    total = 5000
+    batch_cnt = int(total / 24) + 1
+    print('Device: {}, fp16, dataset size: {}, required mAP: 62.00%, mAP: {:.2f}%, batch size is 24, use time: {:.2f} Seconds, latency: {:.2f}ms/batch, throughput: {:.2f} fps'.format(gpu_id, total, mAP_50 * 100, total_time, 1000.0 * total_time / batch_cnt, total / total_time))
+
 
 def main():
-
-    gpu_ids = range(2)
-
-    processes = []
-    for gpu_id in gpu_ids:
-        p = multiprocessing.Process(target=run, args=(gpu_id,))
-        processes.append(p)
-        p.start()
-
-    # 等待所有进程完成
-    for p in processes:
-        p.join()
-
+    run(args.gpu_id)
 if __name__ == "__main__":
     main()

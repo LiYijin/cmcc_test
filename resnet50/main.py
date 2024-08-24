@@ -17,7 +17,7 @@ import os
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--precision', '-P',choices=['fp32', 'fp16'], help='Specify precision mode (fp32 or fp16)', required=True)
-# parser.add_argument('--gpu_id', '-id', help='Specify gpu id', required=True)
+parser.add_argument('--gpu_id', '-id', help='Specify gpu id', required=True)
 
 args = parser.parse_args()
 
@@ -32,7 +32,7 @@ transform = transforms.Compose([
 ])
 
 # 加载训练集
-infer_dataset = CIFAR100(root='./dataset', train=False, download=True, transform=transform)
+infer_dataset = CIFAR100(root='/dataset', train=False, download=True, transform=transform)
 infer_dataset = DataLoader(dataset=infer_dataset, batch_size=24, shuffle=False)
 
 resnet_test = ort.InferenceSession("./resnet-{}.onnx".format(args.precision),
@@ -58,11 +58,20 @@ def evaluate(gpu_id, val_loader):
     log_iter = 100
     total_time = 0.0
     batch_cnt = 0
+    #warm up
+    for i, (inputs, targets) in enumerate(val_loader):
+        if inputs.shape[0] < 24:
+            continue
+        np_dtype = np.float32
+        if args.precision == "fp16":
+            np_dtype = np.float16
+        outputs = resnet_test.run(['output'], {'input': np.array(inputs, dtype=np_dtype)})[0]
+
     # with torch.no_grad():
     for i, (inputs, targets) in enumerate(val_loader):
         # print(targets.size(0))
         if inputs.shape[0] < 24:
-            print("expand", inputs.shape)
+            #print("expand", inputs.shape)
             last_image = inputs[-1].unsqueeze(0)
             inputs = torch.cat((inputs, last_image.repeat(8, 1, 1, 1)), dim=0)
             last_tag = targets[-1].unsqueeze(0)
@@ -104,7 +113,7 @@ def evaluate(gpu_id, val_loader):
 
     top1_accuracy = 100. * top1_correct / total
     top5_accuracy = 100. * top5_correct / total
-    print('Device: {}, top1 accuracy: {}, batch size is 24, use time: {} Seconds, {} frames per seconds'.format(gpu_id, top1_accuracy.item(), total_time, batch_cnt * 24 * 1000.0  / total_time))
+    print('Device: {}\ndata type: fp16\ndataset size: {}\nrequired top1: 78.00%, top1: {:.2f}%\nbatch size is 24\nuse time: {:.2f} Seconds\nlatency: {:.2f}ms/batch\nthroughput: {:.2f} fps'.format(gpu_id, total, top1_accuracy.item(), total_time, 1000.0 * total_time / batch_cnt, batch_cnt * 24 / total_time))
 
     # return top1_accuracy.item(), top5_accuracy.item(), total_time / batch_cnt * 1000.0, batch_cnt * 24 * 1000.0 / total_time
 
@@ -117,8 +126,8 @@ def evaluate(gpu_id, val_loader):
 
 
 def main():
-    #evaluate(args.gpu_id, infer_dataset)
-    evaluate(0, infer_dataset)
+    evaluate(args.gpu_id, infer_dataset)
+    # evaluate(0, infer_dataset)
     # gpu_ids = range(1)
 
     # processes = []

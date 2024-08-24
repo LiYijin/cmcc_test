@@ -12,13 +12,16 @@ from transformers import AutoTokenizer, AutoConfig
 from transformers import BertPreTrainedModel, BertModel
 from transformers import AdamW, get_scheduler
 from transformers import BertTokenizer, BertModel, BertForSequenceClassification
-import torch_musa
 import onnxruntime as ort
 import onnxruntime.capi as ort_cap
 import torch.nn.functional as F
 import time
-import multiprocessing
+import argparse
 
+
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--gpu_id', '-id', help='Specify gpu id', required=True)
+args = parser.parse_args()
 class PeopleDaily(Dataset):
     def __init__(self, data_file):
         self.data = self.load_data(data_file)
@@ -103,7 +106,7 @@ tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
 categories = set()
 
-test_data = PeopleDaily('/data/china-people-daily-ner-corpus/example.test')
+test_data = PeopleDaily('/dataset/china-people-daily-ner-corpus/example.test')
 
 id2label = {0:'O'}
 for c in list(sorted(categories)):
@@ -146,8 +149,8 @@ def test_loop(gpu_id, dataloader, model):
                 [id2label[int(p)] for (p, l) in zip(prediction, label) if l != -100]
                 for prediction, label in zip(predictions, labels)
             ]
+            batch_cnt += 1
     print(classification_report(true_labels, true_predictions, mode='strict', scheme=IOB2))
-    print('Device: {}, batch size is 64, use time: {} Seconds, {} frames per seconds'.format(gpu_id, total_time, 5000 / total_time))
     metrics = classification_report(
       true_labels, 
       true_predictions, 
@@ -155,23 +158,9 @@ def test_loop(gpu_id, dataloader, model):
       scheme=IOB2, 
       output_dict=True
     )
+    total = batch_cnt * batch_size
     valid_macro_f1, valid_micro_f1 = metrics['macro avg']['f1-score'], metrics['micro avg']['f1-score']
     valid_f1 = metrics['weighted avg']['f1-score']
+    print('Device: {}, fp16, dataset size: {}, required micro-F1: 89.00%, micro-F1: {:.2f}%, batch size is 64, use time: {:.2f} Seconds, latency: {:.2f}ms/batch, throughput: {:.2f} fps'.format(gpu_id, total, valid_f1 * 100, total_time, 1000.0 * total_time / batch_cnt, batch_cnt * 24 / total_time))
 
-for t in range(epoch_num):
-    print(f"Epoch {t+1}/{epoch_num}\n-------------------------------")
-    gpu_ids = range(2)
-
-    processes = []
-    for gpu_id in gpu_ids:
-        p = multiprocessing.Process(target=test_loop, args=(gpu_id, test_dataloader, model))
-        processes.append(p)
-        p.start()
-
-    # 等待所有进程完成
-    for p in processes:
-        p.join()
-    # metrics = test_loop(test_dataloader, model)
-    # valid_macro_f1, valid_micro_f1 = metrics['macro avg']['f1-score'], metrics['micro avg']['f1-score']
-    # valid_f1 = metrics['weighted avg']['f1-score']
-print("Done!")
+test_loop(args.gpu_id, test_dataloader, model)
