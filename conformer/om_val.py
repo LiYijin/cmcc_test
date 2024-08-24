@@ -285,7 +285,7 @@ def process_unsplited():
     print(f"total: {total_fps}wav/second")
 
 
-def process_splited(d_id : int):
+def process_splited(device_id : int):
     # encode process
     infer_encoder = partial(infer_multi, mode='encoder')
     sample_num = 0
@@ -328,7 +328,7 @@ def process_splited(d_id : int):
     res = [res[idx] for idx in range(len(res)) if name_list[idx] != "Unvalid data"]
     name_list = [name for name in name_list if name != "Unvalid data"]
     out_list = [f"{name_list[i]} {res[i]}\n" for i in range(len(res))]
-    
+
     file_name = f'om_{device_id}.txt'
     dump_result(file_name, out_list)
     script_path = "compute-wer.py"
