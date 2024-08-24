@@ -131,6 +131,11 @@ def test_loop(gpu_id, dataloader, model):
     total_time = 0.0
     model.eval()
     with torch.no_grad():
+        # warm up
+        for i in range(100):
+            random_input = np.random.randint(2, size=(64, 256),  dtype=np.int64)
+            pred = bert_test.run(['output'], {'input_ids':random_input, 'attention_mask': random_input})
+
         for X, y in tqdm(dataloader):
             target_size = (batch_size, input_len)
             ori_num = X["input_ids"].size(0)
