@@ -97,14 +97,14 @@ else:
 
 if not os.path.exists("/dataset/annotations"):
     os.system(
-        "unzip annotations_trainval2017.zip"
+        "unzip -d /dataset/ /dataset/annotations_trainval2017.zip"
     )
 else:
     print("annotation file is already unziped")
 
 if not os.path.exists("/dataset/val2017"):
     os.system(
-        "unzip val2017.zip"
+        "unzip -d /dataset/ /dataset/val2017.zip"
     )
 else:
     print("val file is already unziped")
@@ -113,7 +113,7 @@ import multiprocessing
 import time
 def run(gpu_id):
     os.environ['MUSA_VISIBLE_DEVICES'] = str(gpu_id)
-    sess = ort.InferenceSession("yolov5m-24-3-640-640.onnx", providers=['MUSAExecutionProvider'])
+    sess = ort.InferenceSession("yolov5m-24-3-640-640-fp16.onnx", providers=[('MUSAExecutionProvider', {"prefer_nhwc": '1'})])
     print("The model expects input shape: ", sess.get_inputs()[0].shape)
     img_size_h = sess.get_inputs()[0].shape[2]
     img_size_w = sess.get_inputs()[0].shape[3]
@@ -121,6 +121,11 @@ def run(gpu_id):
     coco = COCO("/dataset/annotations/instances_val2017.json")
     image_ids = coco.getImgIds()
     total_time = 0.0
+    # warm up
+    for i in range(100):
+        random_input = np.random.randn(24, 3, 640, 640).astype(np.float16)
+        input_name = sess.get_inputs()[0].name
+        outputs = sess.run(None, {input_name: random_input})
 
     def infer(img_ids, size=24):
         total_time = 0.0
@@ -128,7 +133,7 @@ def run(gpu_id):
         imgs = np.array([])
         for img_id in img_ids:
             img_info = coco.loadImgs(img_id)[0]
-            img_path = Path("./") / 'val2017' / img_info['file_name']
+            img_path = Path("/dataset/") / 'val2017' / img_info['file_name']
             img = cv2.imread(img_path)
             size_bk = img.shape
             img = letterbox(img, new_shape=640)[0]  # preprocess
@@ -144,13 +149,13 @@ def run(gpu_id):
                 imgs = np.concatenate((imgs, img), axis=0)
                 # print(imgs.shape)
         
-
+        imgs = imgs.astype(np.float16)
         input_name = sess.get_inputs()[0].name
         start_time = time.time()
         outputs = sess.run(None, {input_name: imgs})
         end_time = time.time()
         total_time += (end_time - start_time)
-        # outputs = outputs.astype(np.float32)
+        outputs = np.array(outputs).astype(np.float32)
 
         filterd_predictions = non_max_suppression(torch.tensor(outputs[0].astype(np.float32)), conf_thres = 0.001, iou_thres = 0.65, labels=[], multi_label=True, agnostic=False, max_det=300)
         for i in range(size):

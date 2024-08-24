@@ -36,7 +36,7 @@ val_loader = torch.utils.data.DataLoader(
     val_dataset,
     batch_size=24,
     shuffle=False,
-    num_workers=0,
+    num_workers=8,
     pin_memory=True
 )
 resnet_test = ort.InferenceSession("./efficientnetv2_rw_t_fp16_24.onnx",
