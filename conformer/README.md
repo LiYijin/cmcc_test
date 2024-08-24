@@ -14,6 +14,9 @@ cd ..
 
 python3 pth2onnx.py #导出模型，正常模型在/root/.cache/espnet_onnx/conformer_test/full 目录下
 
+安装ais-bench/auto-optimizer
+参考ais-bench/auto-optimizer安装
+
 python modify_onnx_decoder.py /root/.cache/espnet_onnx/conformer_test/full/xformer_decoder.onnx \
 /root/.cache/espnet_onnx/conformer_test/full/xformer_decoder_revise.onnx
 python modify_onnx_ctc.py /root/.cache/espnet_onnx/conformer_test/full/ctc.onnx \
