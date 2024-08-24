@@ -3,7 +3,8 @@ import os
 
 if not os.path.exists("./yolov5m.pt"):
     os.system(
-        "wget https://github.com/ultralytics/yolov5/releases/download/v6.0/yolov5m.pt"
+        "cp /models/yolov5m.pt ."
+        #"wget https://github.com/ultralytics/yolov5/releases/download/v6.0/yolov5m.pt"
     )
 else:
     print("Load Local PTH FILE")

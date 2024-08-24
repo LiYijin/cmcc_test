@@ -46,7 +46,7 @@ resnet_test = ort.InferenceSession("./efficientnetv2_rw_t_fp16_24.onnx",
 
 # Evaluation function
 def evaluate(gpu_id, val_loader):
-    os.environ['MUSA_VISIBLE_DEVICES'] = str(gpu_id)
+    # os.environ['MUSA_VISIBLE_DEVICES'] = str(gpu_id)
     top1_correct = 0
     top5_correct = 0
     total = 0
@@ -86,7 +86,8 @@ def evaluate(gpu_id, val_loader):
         print("average time: ", total_time / batch_cnt * 1000.0, "ms") 
     top1_accuracy = 100. * top1_correct / total
     top5_accuracy = 100. * top5_correct / total
-    print('Device: {}, fp16, dataset size: {}, required top1: 81.00%, top1: {:.2f}%, batch size is 24, use time: {:.2f} Seconds, latency: {:.2f}ms/batch, throughput: {:.2f} fps'.format(gpu_id, total, top1_accuracy.item(), total_time, 1000.0 * total_time / batch_cnt, batch_cnt * 24 / total_time))
+    dataset_size = 50000
+    print('Device: {}\ndata type: fp16\ndataset size: {}\nrequired top1: 81.00%, top1: {:.2f}%\nbatch size is 24\nuse time: {:.2f} Seconds\nlatency: {:.2f}ms/batch, throughput: {:.2f} fps'.format(gpu_id, dataset_size, top1_accuracy.item(), total_time, 1000.0 * total_time / batch_cnt, batch_cnt * 24 / total_time))
 
     # return top1_accuracy.item(), top5_accuracy.item(), total_time / batch_cnt * 1000.0, batch_cnt * 24 * 1000.0 / total_time
 

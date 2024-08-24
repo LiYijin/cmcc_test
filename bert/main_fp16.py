@@ -119,6 +119,10 @@ config = AutoConfig.from_pretrained(checkpoint)
 model = BertForNER.from_pretrained(checkpoint, config=config).to(device)
 
 #model.load_state_dict(torch.load("epoch_3_valid_macrof1_95.812_microf1_95.904_weights.bin"))
+if not os.path.exists("./bert_ner_fp16_64.onnx"):
+    os.system(
+        "cp /models/bert_ner_fp16_64.onnx ."
+    )
 bert_test = ort.InferenceSession("./bert_ner_fp16_64.onnx", providers=['MUSAExecutionProvider'])
 
 def test_loop(gpu_id, dataloader, model):
@@ -130,6 +134,7 @@ def test_loop(gpu_id, dataloader, model):
         for X, y in tqdm(dataloader):
             target_size = (batch_size, input_len)
             ori_num = X["input_ids"].size(0)
+            #print("size ", target_size[1] - X["input_ids"].size(1), "size 2", target_size[0] - X["input_ids"].size(0))
             padding = (0, target_size[1] - X["input_ids"].size(1), 0, target_size[0] - X["input_ids"].size(0))
             padded_ids = F.pad(X["input_ids"], padding, "constant", 0)
             padded_mask = F.pad(X['attention_mask'], padding, "constant", 0)
@@ -159,8 +164,9 @@ def test_loop(gpu_id, dataloader, model):
       output_dict=True
     )
     total = batch_cnt * batch_size
+    dataset_size = 4636
     valid_macro_f1, valid_micro_f1 = metrics['macro avg']['f1-score'], metrics['micro avg']['f1-score']
     valid_f1 = metrics['weighted avg']['f1-score']
-    print('Device: {}, fp16, dataset size: {}, required micro-F1: 89.00%, micro-F1: {:.2f}%, batch size is 64, use time: {:.2f} Seconds, latency: {:.2f}ms/batch, throughput: {:.2f} fps'.format(gpu_id, total, valid_f1 * 100, total_time, 1000.0 * total_time / batch_cnt, batch_cnt * 24 / total_time))
+    print('Device: {}\ndata type: fp16\ndataset size: {}\nrequired micro-F1: 89.00%, micro-F1: {:.2f}%\nbatch size is 64\nuse time: {:.2f} Seconds\nlatency: {:.2f}ms/batch\nthroughput: {:.2f} fps'.format(gpu_id, dataset_size, valid_f1 * 100, total_time, 1000.0 * total_time / batch_cnt, batch_cnt * 24 / total_time))
 
 test_loop(args.gpu_id, test_dataloader, model)
