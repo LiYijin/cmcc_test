@@ -119,6 +119,10 @@ config = AutoConfig.from_pretrained(checkpoint)
 model = BertForNER.from_pretrained(checkpoint, config=config).to(device)
 
 #model.load_state_dict(torch.load("epoch_3_valid_macrof1_95.812_microf1_95.904_weights.bin"))
+if not os.path.exists("./bert_ner_fp16_64.onnx"):
+    os.system(
+        "cp /models/bert_ner_fp16_64.onnx ."
+    )
 bert_test = ort.InferenceSession("./bert_ner_fp16_64.onnx", providers=['MUSAExecutionProvider'])
 
 def test_loop(gpu_id, dataloader, model):
