@@ -46,7 +46,7 @@ resnet_test = ort.InferenceSession("./efficientnetv2_rw_t_fp16_24.onnx",
 
 # Evaluation function
 def evaluate(gpu_id, val_loader):
-    os.environ['MUSA_VISIBLE_DEVICES'] = str(gpu_id)
+    # os.environ['MUSA_VISIBLE_DEVICES'] = str(gpu_id)
     top1_correct = 0
     top5_correct = 0
     total = 0
