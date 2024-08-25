@@ -370,7 +370,7 @@ def process_splited(device_id : int):
     script_path = "compute-wer.py"
     char_value = '--char=1'
     verbosity_value = '--v=1'
-    text_value = '/data/haowen.han/downloads/data_aishell/transcript/aishell_transcript_v0.8.txt'
+    text_value = '/data/data_aishell/transcript/aishell_transcript_v0.8.txt'
     result = subprocess.run(['python', script_path, char_value, verbosity_value, text_value, file_name], capture_output=True, text=True)
     overall_wer = []
     line = result.stdout

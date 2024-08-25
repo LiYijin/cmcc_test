@@ -16,7 +16,7 @@ from espnet_onnx.export import ASRModelExport
 m = ASRModelExport()
 m.set_export_config(max_seq_len=2048, ctc_weight=0.3)
 m.export_from_zip(
-    './asr_train_asr_conformer3_raw_char_batch_bins4000000_accum_grad4_sp_valid.acc.ave.zip', 
+    '/models/asr_train_asr_conformer3_raw_char_batch_bins4000000_accum_grad4_sp_valid.acc.ave.zip', 
     tag_name='conformer_test', 
     ctc_weight=0.3, 
     lm_weight=0.3,
