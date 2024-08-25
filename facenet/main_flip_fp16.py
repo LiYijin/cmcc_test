@@ -119,8 +119,9 @@ with torch.no_grad():
         # exit()
         # xb = xb.to(device)
         # b_embeddings = resnet(xb)
+        in_1 = np.array(xb.cpu(), dtype=np.float16)
         start_time = time.time()
-        b_embeddings = resnet_test.run([out_name], {in_name: np.array(xb.cpu(), dtype=np.float16)})[0]
+        b_embeddings = resnet_test.run([out_name], {in_name: in_1})[0]
         end_time = time.time()
         total_time += (end_time - start_time)
         # print(b_embeddings)
@@ -132,8 +133,9 @@ with torch.no_grad():
             embeddings.extend(b_embeddings)
         
         xb_flip = torch.flip(xb, dims=[-1])
+        in_2 = np.array(xb_flip.cpu(), dtype=np.float16)
         start_time = time.time()
-        b_embeddings = resnet_test.run([out_name], {in_name: np.array(xb_flip.cpu(), dtype=np.float16)})[0]
+        b_embeddings = resnet_test.run([out_name], {in_name: in_2})[0]
         end_time = time.time()
         total_time += (end_time - start_time)
         # b_embeddings = resnet(xb_flip)
