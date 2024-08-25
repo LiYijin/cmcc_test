@@ -78,7 +78,7 @@ class BertForNER(BertPreTrainedModel):
         self.post_init()
 
     def forward(self, x):
-        bert_output = self.bert(**x)
+        bert_output = self.bert(*x)
         sequence_output = bert_output.last_hidden_state
         sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
@@ -94,8 +94,9 @@ inputs = {
     'attention_mask': random_input[1]
 }
 #input_names = ["input_ids", "attention_mask"]
-input_data = (
+input_data = [
     random_input[0],
     random_input[1]
-)
-torch.onnx.export(model, inputs, onnx_name, verbose=True, opset_version=17, do_constant_folding=True, input_names = ['input_ids', 'attention_mask'], output_names=['output'])
+]
+# model.eval()
+torch.onnx.export(model, input_data, onnx_name, verbose=False, opset_version=17, do_constant_folding=True, input_names = ['input_ids', 'attention_mask'], output_names=['output'])
