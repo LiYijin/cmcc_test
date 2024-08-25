@@ -106,38 +106,25 @@ for i in range(100):
     outputs = resnet_test.run([out_name], {in_name: random_input})
 with torch.no_grad():
     for xb, yb in embed_loader:
-        # print(len(xb))
-        
-        # print(type(xb))
-        # exit()
-        # for onnx runtime
-        # print(i)
         i+=1
         tag = False
+        cp_num = 64
         if len(xb) != 64:
-            # print("expand", xb.shape)
             last_image = xb[-1].unsqueeze(0)
             xb = torch.cat((xb, last_image.repeat(15, 1, 1, 1)), dim=0)
+            cp_num = 49
             tag = True
-            # break
-        # xb = xb.to(device)
-        # xb = xb.half()
-        # print(xb.shape)
-        # exit()
-        # xb = xb.to(device)
-        # b_embeddings = resnet(xb)
         in_1 = np.array(xb.cpu(), dtype=np.float16)
         start_time = time.time()
         b_embeddings = resnet_test.run([out_name], {in_name: in_1})[0]
         end_time = time.time()
         total_time += (end_time - start_time)
-        # print(b_embeddings)
-        # b_embeddings = b_embeddings.to('cpu').numpy()
         classes.extend(yb.numpy())
+        
         if tag:
-            embeddings.extend(b_embeddings[:49])
+            embeddings.extend(np.copy(b_embeddings[:49]))
         else:
-            embeddings.extend(b_embeddings)
+            embeddings.extend(np.copy(b_embeddings))
         
         xb_flip = torch.flip(xb, dims=[-1])
         in_2 = np.array(xb_flip.cpu(), dtype=np.float16)
@@ -149,9 +136,9 @@ with torch.no_grad():
         # b_embeddings = b_embeddings.to('cpu').numpy()
         classes.extend(yb.numpy())
         if tag:
-            embeddings.extend(b_embeddings[:49])
+            embeddings.extend(np.copy(b_embeddings[:49]))
         else:
-            embeddings.extend(b_embeddings)
+            embeddings.extend(np.copy(b_embeddings))
         
 crop_paths_flip = [x for ele in crop_paths for x in (ele, ele + "_flip")]
 
