@@ -27,6 +27,11 @@ from math import ceil
 import psutil
 from preprocess import Preprocessor
 import subprocess
+import onnxruntime as ort
+import mmap
+import ctypes
+
+
 
 PRE_PROCESSORS = {}
 
@@ -154,7 +159,7 @@ def generate_batch_data(data_list, map_names, batch_num, device_ids, num_process
     return splited_packs
 
 
-def infer_multi(data_pack, mode='default'):
+def infer_multi(speech2text, data_pack, mode='default'):
     if args.bink_cpu:
         cpu_id, device_id, data_list, map_names = data_pack
         p = psutil.Process(os.getpid())
@@ -171,17 +176,8 @@ def infer_multi(data_pack, mode='default'):
         num_process = args.num_process_encoder
     else:
         num_process = args.num_process
-
-    speech2text = Speech2Text(
-        model_dir=args.model_path,
-        providers=["NPUExecutionProvider"],
-        device_id=device_id,
-        disable_preprocess=True,
-        only_use_encoder=only_use_encoder,
-        only_use_decoder=only_use_decoder,
-        enable_multibatch=True,
-        rank_mode=args.rank_encoder_mode
-    )
+   # proc = "cat /proc/" + str(os.getpid()) + "/maps"
+   # os.system(proc)
 
     sync_num.append(1)
     while (len(sync_num) != num_process):
@@ -241,8 +237,10 @@ def sort_by_feature(datas, sort_axis=1):
 
 
 def speech_preprocess(batch, num_process, device_ids, shuffle=False):
+    #malloc_va()
     data_list, map_names = load_data(args.dataset_path)
-
+    #import pdb
+    #pdb.set_trace()
     data_list, map_names = sort_by_feature([data_list, map_names], sort_axis=0)
     # align data num for batch num
     align_data(data_list, batch, [data_list[0]])
@@ -286,22 +284,54 @@ def process_unsplited():
 
 
 def process_splited(device_id : int):
+   # malloc_va()
+    command = "cat /proc/" + str(os.getpid()) + "/maps"
+    os.system(command)
+    speech2text_encoder = Speech2Text(
+        model_dir=args.model_path,
+        providers=["NPUExecutionProvider"],
+        device_id=device_id,
+        disable_preprocess=True,
+        only_use_encoder=True,
+        only_use_decoder=False,
+        enable_multibatch=True,
+        rank_mode=args.rank_encoder_mode
+     )
+
+    speech2text_decoder = Speech2Text(
+        model_dir=args.model_path,
+        providers=["NPUExecutionProvider"],
+        device_id=device_id,
+        disable_preprocess=True,
+        only_use_encoder=False,
+        only_use_decoder=True,
+        enable_multibatch=True,
+        rank_mode=args.rank_encoder_mode
+     )
+
     # encode process
     infer_encoder = partial(infer_multi, mode='encoder')
     sample_num = 0
     features = []
 
-    splited_packs = speech_preprocess(args.batch_encoder, args.num_process_encoder, 
+    splited_packs = speech_preprocess(args.batch_encoder, args.num_process_encoder,
                                       args.device_ids, shuffle=args.shuffle)
     args.num_process_encoder = min(len(splited_packs), args.num_process_encoder)
     map_names = []
     cost_en = 0
-    with Pool(args.num_process_encoder) as p:
-        for _num, _cost, _fe, _name in list(p.imap(infer_encoder, splited_packs)):
-            sample_num += _num
-            map_names += _name
-            cost_en += _cost
-            features.append(_fe)
+    #iresult = lib.unmap(start_addr, size)
+    #os.system(command)
+   # reserverd_range.close()
+   # print(type(splited_packs))
+   # print(type(splited_packs[0]))
+    #with Pool(args.num_process_encoder) as p:
+       # for _num, _cost, _fe, _name in list(p.imap(infer_encoder, splited_packs)):
+   # print(type(splited_packs))
+    _num, _cost, _fe, _name = infer_encoder(speech2text_encoder,*splited_packs)
+    sample_num += _num
+    map_names += _name
+    cost_en += _cost
+    features.append(_fe)
     map_names = flat(map_names)
     features = flat(features)
     features = [np.split(f, f.shape[0], 0) for f in features]
@@ -316,12 +346,18 @@ def process_splited(device_id : int):
     res = []
     name_list = []
     cost_de = 0
-    args.num_process_decoder = min(len(splited_packs), args.num_process_decoder)
-    with Pool(args.num_process_decoder) as p:
-        for _, _cost, _re, _name in list(p.imap(infer_decoder, splited_packs)):
-            cost_de += _cost
-            name_list += _name
-            res.extend(_re)
+    #args.num_process_decoder = min(len(splited_packs), args.num_process_decoder)
+    #with Pool(args.num_process_decoder) as p:
+        #for _, _cost, _re, _name in list(p.imap(infer_decoder, splited_packs)):
+    _,_cost, _re, _name = infer_decoder(speech2text_decoder,*splited_packs)
+    #output = infer_decoder(speech2text_decoder, *splited_packs)
+    #print(type(output))
+    #print(len(output))
+    #print(output)
+    #exit(0)
+    cost_de += _cost
+    name_list += _name
+    res.extend(_re)
 
     res = flat(res)
     name_list = flat(name_list)
@@ -329,17 +365,20 @@ def process_splited(device_id : int):
     name_list = [name for name in name_list if name != "Unvalid data"]
     out_list = [f"{name_list[i]} {res[i]}\n" for i in range(len(res))]
 
-    file_name = f'om_{device_id}.txt'
+    file_name = f'om_{device_id}_1.txt'
     dump_result(file_name, out_list)
     script_path = "compute-wer.py"
     char_value = '--char=1'
     verbosity_value = '--v=1'
-    text_value = 'text'
+    text_value = '/data/haowen.han/downloads/data_aishell/transcript/aishell_transcript_v0.8.txt'
     result = subprocess.run(['python', script_path, char_value, verbosity_value, text_value, file_name], capture_output=True, text=True)
     overall_wer = []
+    line = result.stdout
     match = re.search(r"Overall -> (\d+\.\d+) %", line)
     if match:
-        overall_wer = match.group(1)  # 提取 "Overall" 行中的数值
+        overall_wer = match.group(1)
+    #print(type(overall_wer))
+    #print(len(overall_wer))
     encoder_duration = cost_en / args.num_process_encoder
     decoder_duration = cost_de / args.num_process_decoder
     total_fps = sample_num / (encoder_duration + decoder_duration)
@@ -349,14 +388,14 @@ def process_splited(device_id : int):
     print(f"decoder: {sample_num/decoder_duration}wav/second")
     print(f"total: {total_fps}wav/second")
     print(f"acc: {100 - float(overall_wer)}%")
-    
+
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ASVspoof detection system")
     parser.add_argument("--dataset_path", default='/workspace/ort-musa-workspace/workspace/espnet/test/S0768/', type=str, help="datapath")
     parser.add_argument('--model_path', default="/root/.cache/espnet_onnx/chenao_conformer", type=str, help='path to the om model and config')
-    parser.add_argument('--result_path', default="om_all_beam_size.txt", type=str, help='path to result')
+    parser.add_argument('--result_path', default="om_all_beam_size_hahha_11.txt", type=str, help='path to result')
     parser.add_argument('--unsplit', action='store_true', help='enable unsplit mode')
     parser.add_argument('--batch', default=4, type=int, help='batch size of asr process')
     parser.add_argument('--batch_encoder', default=4, type=int, help='batch size  of encode process')
@@ -374,7 +413,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     np.random.seed(args.seed)
     args.device_ids = [int(_) for _ in args.device_ids.split(",")]
-    args.d_id = [int(_) for _ in args.device_ids.split(",")]
+    args.d_id = int(args.d_id)
     manager = Manager()
     sync_num = manager.list()
     config_path = os.path.join(args.model_path, "config.yaml")

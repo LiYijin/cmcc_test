@@ -5,7 +5,13 @@ We fix requirements.txt and add preprocess_lfw.sh script
 ```shell
 cd facenet-tf
 conda create -n facenet-mtcnn python=3.5
+conda activate facenet-mtcnn
+pip install --upgrade pip
 pip install -r requirements.txt
+pip install opencv-python-headless
+pip install numpy==1.16.2
+pip install scipy==1.2.1
+export PYTHONPATH=./src
 bash preprocess_lfw.sh
 ```
 
