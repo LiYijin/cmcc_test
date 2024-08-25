@@ -41,11 +41,9 @@ nvidia-nvtx-cu12==12.1.105
 oauthlib==3.2.2
 onnx==1.16.1
 onnxconverter-common==1.14.0
-onnxruntime @ file:///root/ort-for-musa/build/Linux/Debug/dist/onnxruntime-1.18.1-cp38-cp38-linux_x86_64.whl#sha256=0d2cd22a082bd7ee3982b795837da32200cc6a19d7c9a0128a2909f7ec1c73d7
 opt-einsum==3.3.0
 packaging==24.1
 pillow==10.2.0
-protobuf==5.27.3
 pyasn1==0.6.0
 pyasn1_modules==0.4.0
 requests==2.32.3
