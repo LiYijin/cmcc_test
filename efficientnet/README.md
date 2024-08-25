@@ -10,10 +10,16 @@ bash extra_dataset.sh
 
 #Test efficientnet.
 
-You can test efficientnet accuray and latency only by:
+You can generate onnx model by:
 ```
-bash test_efficientnet.sh
+python gen-onnx.py
+```
+Then, You can test efficientnet accuray and latency only by:
+```
+for i in {0..7}
+do
+    MUSA_VISIBLE_DEVICES=$i nohup python main_fp16.py -id $i 2>&1 | tee efficientnet.device_$i.log &
+done
 ```
 This script will download model from https://github.com/huggingface/pytorch-image-models/releases/download/v0.1-weights/efficientnetv2_t_agc-3620981a.pth,
 save to fp16 onnx and do inference by batch.
-
