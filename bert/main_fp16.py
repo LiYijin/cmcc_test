@@ -101,7 +101,10 @@ item_num = 7
 device = 'cpu'
 print(f'Using {device} device')
 
-checkpoint = "bert-base-chinese"
+if os.path.exists("/models/models--bert-base-chinese/"):
+    checkpoint = "/models/models--bert-base-chinese/snapshots/c30a6ed22ab4564dc1e3b2ecbf6e766b0611a33f"
+else:
+    checkpoint = "bert-base-chinese"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
 categories = set()
@@ -145,8 +148,8 @@ def test_loop(gpu_id, dataloader, model):
             padded_mask = F.pad(X['attention_mask'], padding, "constant", 0)
             padded_y = F.pad(y, padding, "constant", -100)
             padded_ids, padded_mask, y = padded_ids.to(device), padded_mask.to(device), padded_y.to(device)
-            padded_ids_test = np.ascontiguousarray(np.array(padded_ids, dtype=np.int64))
-            padded_mask_test = np.ascontiguousarray(np.array(padded_mask, dtype=np.int64))
+            padded_ids_test = ort.OrtValue.ortvalue_from_numpy(np.ascontiguousarray(np.array(padded_ids, dtype=np.int64)))
+            padded_mask_test = ort.OrtValue.ortvalue_from_numpy(np.ascontiguousarray(np.array(padded_mask, dtype=np.int64)))
             start_time = time.time()
             pred = bert_test.run(['output'], {'input_ids': padded_ids_test, 'attention_mask': padded_mask_test})
             end_time = time.time()

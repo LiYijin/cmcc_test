@@ -19,7 +19,10 @@ os.environ['PYTHONHASHSEED'] = str(seed)
 device = 'cpu'
 print(f'Using {device} device')
 
-checkpoint = "bert-base-chinese"
+if os.path.exists("/models/models--bert-base-chinese/"):
+    checkpoint = "/models/models--bert-base-chinese/snapshots/c30a6ed22ab4564dc1e3b2ecbf6e766b0611a33f"
+else:
+    checkpoint = "bert-base-chinese"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
 categories = set()
@@ -90,4 +93,9 @@ inputs = {
     'input_ids': random_input[0],
     'attention_mask': random_input[1]
 }
-torch.onnx.export(model, inputs, onnx_name, verbose=False, opset_version=17, do_constant_folding=True, input_names = ['input_ids', 'attention_mask'], output_names=['output'])
+#input_names = ["input_ids", "attention_mask"]
+input_data = (
+    random_input[0],
+    random_input[1]
+)
+torch.onnx.export(model, input_data, onnx_name, verbose=True, opset_version=17, do_constant_folding=True, input_names = ['input_ids', 'attention_mask'], output_names=['output'])
