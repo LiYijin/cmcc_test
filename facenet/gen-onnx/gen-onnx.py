@@ -7,6 +7,6 @@ resnet = InceptionResnetV1(
     pretrained='casia-webface'
 )
 
-random_input = torch.randn(24, 3, 160, 160)
+random_input = torch.randn(64, 3, 160, 160)
 torch.onnx.export(resnet, random_input, "../model/facenet-fp32.onnx")
 

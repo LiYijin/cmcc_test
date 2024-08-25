@@ -9,7 +9,7 @@ import time
 # data_dir = '/root/facenet-github/lfw_pairs/lfw-py/lfw'
 # pairs_path = '/root/facenet-github/lfw_pairs/lfw-py/pairs.txt'
 
-batch_size = 24
+batch_size = 64
 epochs = 15
 workers = 0 if os.name == 'nt' else 8
 
@@ -87,7 +87,10 @@ for i, (x, b_paths) in enumerate(loader):
 # torch.onnx.export(resnet, random_input, "facenet.onnx")
 # exit()
 import onnxruntime as ort
-resnet_test = ort.InferenceSession("./model/facenet-fp16.onnx", providers=['MUSAExecutionProvider'])
+sess_opt = ort.SessionOptions()
+#sess_opt.log_severity_level = 0 
+resnet_test = ort.InferenceSession("./model/facenet-fp16.onnx", sess_opt,
+                                     providers=[('MUSAExecutionProvider', {"prefer_nhwc": '1'})])
 in_name = resnet_test.get_inputs()[0].name
 out_name = resnet_test.get_outputs()[0].name
 
@@ -95,8 +98,12 @@ classes = []
 embeddings = []
 #resnet.half()
 # resnet.eval()
+# print(len(embed_loader))
 i = 0
 total_time = 0.0
+for i in range(100):
+    random_input = np.random.randn(64, 3, 160, 160).astype(np.float16)
+    outputs = resnet_test.run([out_name], {in_name: random_input})
 with torch.no_grad():
     for xb, yb in embed_loader:
         # print(len(xb))
@@ -107,7 +114,7 @@ with torch.no_grad():
         # print(i)
         i+=1
         tag = False
-        if len(xb) != 24:
+        if len(xb) != 64:
             # print("expand", xb.shape)
             last_image = xb[-1].unsqueeze(0)
             xb = torch.cat((xb, last_image.repeat(15, 1, 1, 1)), dim=0)
@@ -119,44 +126,42 @@ with torch.no_grad():
         # exit()
         # xb = xb.to(device)
         # b_embeddings = resnet(xb)
+        in_1 = np.array(xb.cpu(), dtype=np.float16)
         start_time = time.time()
-        b_embeddings = resnet_test.run([out_name], {in_name: np.array(xb.cpu(), dtype=np.float16)})[0]
+        b_embeddings = resnet_test.run([out_name], {in_name: in_1})[0]
         end_time = time.time()
         total_time += (end_time - start_time)
         # print(b_embeddings)
         # b_embeddings = b_embeddings.to('cpu').numpy()
         classes.extend(yb.numpy())
         if tag:
-            embeddings.extend(b_embeddings[:9])
+            embeddings.extend(b_embeddings[:49])
         else:
             embeddings.extend(b_embeddings)
         
         xb_flip = torch.flip(xb, dims=[-1])
+        in_2 = np.array(xb_flip.cpu(), dtype=np.float16)
         start_time = time.time()
-        b_embeddings = resnet_test.run([out_name], {in_name: np.array(xb_flip.cpu(), dtype=np.float16)})[0]
+        b_embeddings = resnet_test.run([out_name], {in_name:in_2})[0]
         end_time = time.time()
         total_time += (end_time - start_time)
         # b_embeddings = resnet(xb_flip)
         # b_embeddings = b_embeddings.to('cpu').numpy()
         classes.extend(yb.numpy())
         if tag:
-            embeddings.extend(b_embeddings[:9])
+            embeddings.extend(b_embeddings[:49])
         else:
             embeddings.extend(b_embeddings)
         
-# print(len(embeddings))
-# print(len(crop_paths))  
 crop_paths_flip = [x for ele in crop_paths for x in (ele, ele + "_flip")]
-# print(len(crop_paths_flip))
-# print(crop_paths_flip[0], crop_paths_flip[1]) 
 
 t = [[0.0 for _ in range(512)] for _ in range(13233 * 2)]
-len_embd = (int) (len(embeddings) / 2 / 24)
+len_embd = (int) (len(embeddings) / 2 / 64)
 for i in range(len_embd + 1):
-    batch_num = 24 if i < len_embd else 9
+    batch_num = 64 if i < len_embd else 49
     for j in range(batch_num):
-        t[2 * (24 * i + j)] = embeddings[48 * i + j]
-        t[2 * (24 * i + j) + 1] = embeddings[48 * i + j + batch_num]
+        t[2 * (64 * i + j)] = embeddings[128 * i + j]
+        t[2 * (64 * i + j) + 1] = embeddings[128 * i + j + batch_num]
         
 
 embeddings = t
@@ -357,7 +362,7 @@ embeddings_flip[:,embedding_size:] = embeddings[1::2,:]
 # embeddings_flip = embeddings
 tpr, fpr, accuracy, val, val_std, far, fp, fn = evaluate(embeddings_flip, issame_list, distance_metric=1, subtract_mean=True)
 dataset_size = 13248 * 2
-batch_cnt = dataset_size / 24
+batch_cnt = dataset_size / 64
 # print(accuracy)
 # print(np.mean(accuracy))
 acc = np.mean(accuracy)
@@ -365,4 +370,4 @@ import argparse
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--gpu_id', '-id', help='Specify gpu id', required=True)
 args = parser.parse_args()
-print('Device: {}\ndata type: fp16\ndataset size: {}\nrequired Acc: 99.05%, Acc: {:.2f}%\nbatch size is 24\nuse time: {:.2f} Seconds\nlatency: {:.2f}ms/batch\nthroughput: {:.2f} fps'.format(args.gpu_id, dataset_size, acc * 100, total_time, 1000.0 * total_time / batch_cnt, batch_cnt * 24 / total_time))
+print('Device: {}\ndata type: fp16\ndataset size: {}\nrequired Acc: 99.05%, Acc: {:.2f}%\nbatch size is 64\nuse time: {:.2f} Seconds\nlatency: {:.2f}ms/batch\nthroughput: {:.2f} fps'.format(args.gpu_id, dataset_size, acc * 100, total_time, 1000.0 * total_time / batch_cnt, batch_cnt * 64 / total_time))
