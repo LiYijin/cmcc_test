@@ -1,9 +1,6 @@
 import torch
 import os 
 
-if not os.path.exists("/models/ultralytics_yolov5_master/"):
-    print("You should prepare ultralytics yolov5 on /models/, which can be found on /root/.cache/torch/hub/ultralytics_yolov5_master/")
-    exit(1)
 if not os.path.exists("./yolov5m.pt"):
     os.system(
         "cp /models/yolov5m.pt ."
@@ -11,7 +8,8 @@ if not os.path.exists("./yolov5m.pt"):
 else:
     print("Load Local PTH FILE")
 
-model = torch.hub.load('/models/ultralytics_yolov5_master//', 'yolov5m', source="local")
+model = torch.hub.load('ultralytics/yolov5', 'yolov5m', pretrained=True)
+
 
 device = torch.device("cpu")
 # print(device)
