@@ -84,8 +84,9 @@ def evaluate(gpu_id, val_loader):
         np_dtype = np.float32
         if args.precision == "fp16":
             np_dtype = np.float16
+        in_ = np.array(inputs, dtype=np_dtype)
         start_time = time.time()
-        outputs = resnet_test.run(['output'], {'input': np.array(inputs, dtype=np_dtype)})[0]
+        outputs = resnet_test.run(['output'], {'input': in_})[0]
         end_time = time.time()
         total_time += (end_time - start_time)
         outputs = torch.from_numpy(outputs.astype(np.float32))
