@@ -98,4 +98,4 @@ input_data = (
     random_input[0],
     random_input[1]
 )
-torch.onnx.export(model, input_data, onnx_name, verbose=True, opset_version=17, do_constant_folding=True, input_names = ['input_ids', 'attention_mask'], output_names=['output'])
+torch.onnx.export(model, inputs, onnx_name, verbose=True, opset_version=17, do_constant_folding=True, input_names = ['input_ids', 'attention_mask'], output_names=['output'])
