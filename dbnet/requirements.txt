@@ -1,3 +1,4 @@
+onnx_graphsurgeon==0.5.2
 common==0.1.2
 dual==0.0.10
 albucore==0.0.12
