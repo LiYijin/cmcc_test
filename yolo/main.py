@@ -83,14 +83,14 @@ def scale_coords(img1_shape, coords, img0_shape, ratio_pad=None):
 
 if not os.path.exists("/dataset/annotations_trainval2017.zip"):
     os.system(
-        "wget -o /dataset/annotations_trainval2017.zip http://images.cocodataset.org/annotations/annotations_trainval2017.zip"
+        "wget http://images.cocodataset.org/annotations/annotations_trainval2017.zip & cp annotations_trainval2017.zip /modesl/."
     )
 else:
     print("Use local annotation file")
 
 if not os.path.exists("/dataset/val2017.zip"):
     os.system(
-        "wget -o /dataset/val2017.zip http://images.cocodataset.org/zips/val2017.zip"
+        "wget http://images.cocodataset.org/zips/val2017.zip & cp annotations_trainval2017.zip /modesl/."
     )
 else:
     print("Use local val file")
