@@ -1,3 +1,6 @@
+tight==0.1.0
+data==0.4
+prox==0.0.17
 onnx_graphsurgeon==0.5.2
 common==0.1.2
 dual==0.0.10
@@ -59,7 +62,7 @@ packaging==24.1
 paddle==1.0.2
 paddle2onnx==1.2.6
 paddleocr==2.8.1
-paddlepaddle-gpu==2.6.1
+paddlepaddle==2.6.1
 peewee==3.17.6
 pillow==10.4.0
 prox==0.0.17
@@ -89,7 +92,6 @@ threadpoolctl==3.5.0
 tifffile==2023.7.10
 tight==0.1.0
 tomli==2.0.1
-torch==2.4.0
 tqdm==4.66.4
 triton==3.0.0
 typing_extensions==4.12.2
