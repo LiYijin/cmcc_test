@@ -1,5 +1,15 @@
 ## README
+First, you should use mtcnn to proprocess flw raw jpg.
+facenet-tf is cloned from https://github.com/davidsandberg/facenet.
+We fix requirements.txt and add preprocess_lfw.sh script
+```shell
+cd facenet-tf
+conda create -n facenet-mtcnn python=3.5
+pip install -r requirements.txt
+bash preprocess_lfw.sh
+```
 
+Then, generate onnx model and test.
 ```shell
 cd gen-onnx
 conda create --name facenet-convert python=3.6 --channel https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
