@@ -28,8 +28,9 @@ cd ..
 conda create --name facenet python=3.8 --channel https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
 conda activate facenet
 pip install -r requirement.txt
+cd gen-onnx
 python3 gen-onnx.py
-python3 convert-fp16.py
+cd ..
 bash ./test_facenet.sh
 ```
 
