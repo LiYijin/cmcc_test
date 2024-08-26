@@ -1,3 +1,9 @@
+```
+conda create --name efficientnet python=3.8
+conda activate efficientnet
+pip install -r requirements.txt
+```
+
 #Prepare dataset.
 ##download:
 Dataset used is imagenet1k 2012, you can download it from https://image-net.org/data/ILSVRC/2012/ILSVRC2012_img_val.tar,

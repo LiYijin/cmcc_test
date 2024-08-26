@@ -1,3 +1,8 @@
+```
+conda create --name bert python=3.8
+conda activate bert
+pip install -r requirements.txt
+```
 1. Origin bert model can be dowloaded on:
 https://huggingface.co/google-bert/bert-base-chinese by the instructions on this website:
 ```

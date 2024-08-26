@@ -1,3 +1,8 @@
+```
+conda create --name resnet50 python=3.8
+conda activate resnet50
+pip install -r requirements.txt
+```
 You can generate onnx model by:
 ```shell
 python gen-onnx.py -P fp16

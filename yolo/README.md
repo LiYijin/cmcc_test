@@ -1,3 +1,11 @@
+```
+conda create --name yolo python=3.8
+conda activate yolo
+pip install -r requirements.txt
+apt install libgl1-mesa-glx
+apt-get install -y libglib2.0-0 libsm6 libxrender1 libxext6
+```
+
 1. prepare yolo model sturcture:
 https://github.com/ultralytics/yolov5
 put it on /models/yolov5:
