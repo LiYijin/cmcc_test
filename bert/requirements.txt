@@ -1,5 +1,7 @@
 seqeval==1.2.2
-torch==2.4.0+cpu
+--extra-index-url   https://download.pytorch.org/whl/cpu
+torch==2.4.0+cpu 
+--extra-index-url   https://download.pytorch.org/whl/cpu
 torchvision==0.19.0+cpu
 onnx==1.16.2
 tqdm==4.66.5
