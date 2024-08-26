@@ -13,11 +13,27 @@
 # limitations under the License.
 
 from espnet_onnx.export import ASRModelExport
+import onnxruntime.multibatch_optimization as mo
+from onnxmltools.utils.float16_converter import convert_float_to_float16_model_path
+import onnx
+
 m = ASRModelExport()
 m.set_export_config(max_seq_len=2048, ctc_weight=0.3)
 m.export_from_zip(
-    '/models/asr_train_asr_conformer3_raw_char_batch_bins4000000_accum_grad4_sp_valid.acc.ave.zip', 
+    '/workspace/ort-musa-workspace/workspace/espnet/Conformer_for_Pytorch_poc/asr_train_asr_conformer3_raw_char_batch_bins4000000_accum_grad4_sp_valid.acc.ave.zip', 
     tag_name='conformer_test', 
     ctc_weight=0.3, 
     lm_weight=0.3,
 )
+
+mo.ctc_optimizer("/root/.cache/espnet_onnx/conformer_test/full/ctc.onnx", "/root/.cache/espnet_onnx/conformer_test/full/ctc_dynamic.onnx")
+mo.decoder_optimizer("/root/.cache/espnet_onnx/conformer_test/full/xformer_decoder.onnx", "/root/.cache/espnet_onnx/conformer_test/full/xformer_decoder_revise.onnx")
+mo.encoder_optimizer("/root/.cache/espnet_onnx/conformer_test/full/xformer_encoder.onnx", "/root/.cache/espnet_onnx/conformer_test/full/xformer_encoder_multibatch.onnx", 24)
+
+new_onnx_model = convert_float_to_float16_model_path('/root/.cache/espnet_onnx/conformer_test/full/ctc_dynamic.onnx')
+onnx.save(new_onnx_model, '/root/.cache/espnet_onnx/conformer_test/full/ctc_24_fp16.onnx')
+
+new_onnx_model = convert_float_to_float16_model_path('/root/.cache/espnet_onnx/conformer_test/full/transformer_lm.onnx')
+onnx.save(new_onnx_model, '/root/.cache/espnet_onnx/conformer_test/full/transformer_lm_fp16.onnx')
+
+
