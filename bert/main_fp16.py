@@ -118,17 +118,16 @@ for c in list(sorted(categories)):
 label2id = {v: k for k, v in id2label.items()}
 
 test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=False, collate_fn=collote_fn)
-config = AutoConfig.from_pretrained(checkpoint)
-model = BertForNER.from_pretrained(checkpoint, config=config).to(device)
+# config = AutoConfig.from_pretrained(checkpoint)
+# model = BertForNER.from_pretrained("/models/epoch_3_valid_macrof1_95.812_microf1_95.904_weights.bin", config=config).to(device)
 
 #model.load_state_dict(torch.load("epoch_3_valid_macrof1_95.812_microf1_95.904_weights.bin"))
 bert_test = ort.InferenceSession("./bert_ner_fp16_64.onnx", providers=['MUSAExecutionProvider'])
 
-def test_loop(gpu_id, dataloader, model):
+def test_loop(gpu_id, dataloader):
     true_labels, true_predictions = [], []
     batch_cnt = 0
     total_time = 0.0
-    model.eval()
     with torch.no_grad():
         # warm up
         for i in range(100):
@@ -175,4 +174,4 @@ def test_loop(gpu_id, dataloader, model):
     valid_f1 = metrics['weighted avg']['f1-score']
     print('Device: {}\ndata type: fp16\ndataset size: {}\nrequired micro-F1: 89.00%, micro-F1: {:.2f}%\nbatch size is 64\nuse time: {:.2f} Seconds\nlatency: {:.2f}ms/batch\nthroughput: {:.2f} fps'.format(gpu_id, dataset_size, valid_f1 * 100, total_time, 1000.0 * total_time / batch_cnt, batch_cnt * batch_size / total_time))
 
-test_loop(args.gpu_id, test_dataloader, model)
+test_loop(args.gpu_id, test_dataloader)
