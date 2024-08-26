@@ -101,8 +101,8 @@ item_num = 7
 device = 'cpu'
 print(f'Using {device} device')
 
-if os.path.exists("/models/models--bert-base-chinese/"):
-    checkpoint = "/models/models--bert-base-chinese/snapshots/c30a6ed22ab4564dc1e3b2ecbf6e766b0611a33f"
+if os.path.exists("/models/bert-base-chinese/"):
+    checkpoint = "/models/bert-base-chinese/"
 else:
     checkpoint = "bert-base-chinese"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
@@ -122,10 +122,6 @@ config = AutoConfig.from_pretrained(checkpoint)
 model = BertForNER.from_pretrained(checkpoint, config=config).to(device)
 
 #model.load_state_dict(torch.load("epoch_3_valid_macrof1_95.812_microf1_95.904_weights.bin"))
-if not os.path.exists("./bert_ner_fp16_64.onnx"):
-    os.system(
-        "cp /models/bert_ner_fp16_64.onnx ."
-    )
 bert_test = ort.InferenceSession("./bert_ner_fp16_64.onnx", providers=['MUSAExecutionProvider'])
 
 def test_loop(gpu_id, dataloader, model):
