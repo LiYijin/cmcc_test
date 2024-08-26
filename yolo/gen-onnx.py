@@ -9,9 +9,9 @@ else:
     print("Load Local PTH FILE")
 
 # This is for model download online
-model = torch.hub.load('ultralytics/yolov5', 'yolov5m', pretrained=True)
+# model = torch.hub.load('ultralytics/yolov5', 'yolov5m', pretrained=True)
 # This is for model offline
-# model = torch.hub.load('/models/ultralytics_yolov5_master//', 'yolov5m', source="local")
+model = torch.hub.load('/models/yolov5/', 'yolov5m', source="local")
 
 device = torch.device("cpu")
 # print(device)
