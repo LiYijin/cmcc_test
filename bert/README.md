@@ -12,7 +12,6 @@ Pretrained model shoule be put on /models/epoch_3_valid_macrof1_95.812_microf1_9
 You can generate onnx model and convert to fp16 model by:
 ```
 python gen-onnx.py
-python convert.py
 ```
 
 3. Then, You can test efficientnet accuray and latency only by:

@@ -9,7 +9,6 @@ prepare dataset:
 2. You can generate onnx model and convert to fp16 model by:
 ```
 python gen-onnx.py
-python convert.py
 ```
 3. Then, You can test efficientnet accuray and latency only by:
 ```

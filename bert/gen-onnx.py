@@ -10,6 +10,8 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer, AutoConfig
 from transformers import BertPreTrainedModel, BertModel
 from transformers import AdamW, get_scheduler
+from onnxmltools.utils.float16_converter import convert_float_to_float16_model_path
+import onnx
 
 batch_size = 64
 seed = 7
@@ -102,3 +104,6 @@ input_data = [
 ]
 # model.eval()
 torch.onnx.export(model, input_data, onnx_name, verbose=False, opset_version=17, do_constant_folding=True, input_names = ['input_ids', 'attention_mask'], output_names=['output'])
+# convert to fp16
+new_onnx_model = convert_float_to_float16_model_path('bert_ner_fp32_64-opset17.onnx')
+onnx.save(new_onnx_model, 'bert_ner_fp16_64.onnx')
