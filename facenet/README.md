@@ -19,13 +19,22 @@ Then, generate onnx model and test.
 ```shell
 cd gen-onnx
 conda create --name facenet-convert python=3.6 --channel https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+conda activate facenet-convert
+pip install --trusted-host pypi.python.org --upgrade pip
 pip install -r requirement.txt
 python3 convert.py
-python3 gen-onnx.py # gen onnx file in ../model/facenet-fp32.onnx
 conda deactivate
 cd ..
-python3 convert-fp16.py
 conda create --name facenet python=3.8 --channel https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+conda activate facenet
 pip install -r requirement.txt
+python3 gen-onnx.py
+python3 convert-fp16.py
 bash ./test_facenet.sh
 ```
+
+
+### Tips:
+
+* tf pb文件转pytoch pt文件 参考https://github.com/timesler/facenet-pytorch
+* load pt文件生成onnx模型的模型backbone 参考https://github.com/timesler/facenet-pytorch

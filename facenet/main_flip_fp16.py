@@ -88,9 +88,16 @@ for i, (x, b_paths) in enumerate(loader):
 # exit()
 import onnxruntime as ort
 sess_opt = ort.SessionOptions()
-#sess_opt.log_severity_level = 0 
+#sess_opt.log_severity_level = 0
+
+#sess_opt.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
+
+# To enable model serialization after graph optimization set this
+sess_opt.optimized_model_filepath = "opt.onnx"
 resnet_test = ort.InferenceSession("./model/facenet-fp16.onnx", sess_opt,
-                                     providers=[('MUSAExecutionProvider', {"prefer_nhwc": '1'})])
+                                     providers=[('MUSAExecutionProvider', {
+                                         "prefer_nhwc": '1'
+                                         })])
 in_name = resnet_test.get_inputs()[0].name
 out_name = resnet_test.get_outputs()[0].name
 
