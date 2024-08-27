@@ -19,6 +19,8 @@ pip install onnxmltools==1.12.0
 pip install psutil
 #所以缺少的python依赖按照requirements_new.txt版本安装
 
+python download.py
+
 #导出模型,文件中要更改conformer模型.zip文件的路径，正常模型在/root/.cache/espnet_onnx/conformer_test/full 目录下
 #注意check pth2onnx.py中的所有路径
 python3 pth2onnx.py 
