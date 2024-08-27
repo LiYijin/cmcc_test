@@ -33,5 +33,5 @@ python3 pth2onnx.py
 #最后要在om_val.py中检查373行的text_value变量，要更改为'/dataset/data_aishell/transcript/aishell_transcript_v0.8.txt'
 
 #在run.sh脚本中，需要修改数据集路径
-dataset_path=/dataset/data_aishell/ ./run.sh
+bash run.sh
 ```
