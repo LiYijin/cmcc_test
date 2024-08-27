@@ -10,8 +10,8 @@ https://github.com/ultralytics/yolov5
 put it on /models/yolov5:
 
 prepare dataset:
-/models/annotations_trainval2017.zip
-/models/val2017.zip
+/dataset/annotations_trainval2017.zip
+/dataset/val2017.zip
 
 2. You can generate onnx model and convert to fp16 model by:
 ```
