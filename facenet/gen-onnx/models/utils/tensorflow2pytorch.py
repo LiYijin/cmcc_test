@@ -332,7 +332,7 @@ def tensorflow2pytorch():
     # torch.save(state_dict, f'{tf_mdl_dir}-{data_name}-features.pt')
     
     print('\nLoad CASIA-Webface-trained weights and save\n')
-    mdl = InceptionResnetV1(num_classes=10575, pretrained='casia-webface').eval()
+    mdl = InceptionResnetV1(num_classes=10575).eval()
     tf_mdl_dir = 'data/20180408-102900'
     data_name = 'casia-webface'
     load_tf_model_weights(mdl, lookup_inception_resnet_v1, tf_mdl_dir)
@@ -348,7 +348,7 @@ def tensorflow2pytorch():
     state_dict.pop('logits.weight')
     state_dict.pop('logits.bias')
     torch.save(state_dict, f'{tf_mdl_dir}-{data_name}-features.pt')
-    
+    return 
     lookup_pnet = {
         'conv1': ['pnet/conv1', load_tf_conv2d_trans],
         'prelu1': ['pnet/PReLU1', load_tf_linear],

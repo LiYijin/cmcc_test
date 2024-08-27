@@ -19,10 +19,11 @@ cd ../
 
 ```shell
 cd gen-onnx
-conda create --name facenet-convert python=3.6 --channel https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+conda create --name facenet-convert python=3.6
 conda activate facenet-convert
 pip install --trusted-host pypi.python.org --upgrade pip
 pip install -r requirements.txt
+yum install libXext libSM libXrender
 python3 convert.py
 conda deactivate
 cd ..

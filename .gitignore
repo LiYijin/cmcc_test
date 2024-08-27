@@ -19,3 +19,4 @@ dbnet/gen-onnx/infer-mv3-db/inference.pdiparams.info
 dbnet/gen-onnx/infer-mv3-db/
 dbnet/data/
 facenet/data/
+*.log

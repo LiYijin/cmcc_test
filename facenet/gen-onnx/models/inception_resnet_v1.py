@@ -257,6 +257,7 @@ class InceptionResnetV1(nn.Module):
         self.last_linear = nn.Linear(1792, 512, bias=False)
         self.last_bn = nn.BatchNorm1d(512, eps=0.001, momentum=0.1, affine=True)
 
+        self.logits = nn.Linear(512, 10575)
         if pretrained is not None:
             self.logits = nn.Linear(512, tmp_classes)
             load_weights(self, pretrained)
