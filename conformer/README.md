@@ -2,7 +2,7 @@
 #在cmcc_test的目录下进行操作
 git clone https://github.com/hochen1/espnet_onnx.git
 cd espnet_onnx
-python install .
+pip install .
 
 # 安装auto-optimizer
 # 参考https://gitee.com/ascend/msadvisor/tree/master/auto-optimizer
@@ -10,14 +10,8 @@ git clone https://gitee.com/ascend/msadvisor.git
 cd msadvisor/auto-optimizer
 python3 -m pip install .
 
-pip install typeguard==2.13.3
-pip install typeguard==2.13.3
-pip install espnet==202402
-pip install espnet-model-zoo==0.1.7
-pip install torchaudio
-pip install onnxmltools==1.12.0
-pip install psutil
-#所以缺少的python依赖按照requirements_new.txt版本安装
+#如果有缺少的依赖按照requirements_new.txt版本安装
+pip install typeguard==2.13.3 espnet==202402 espnet-model-zoo==0.1.7 torchaudio onnxmltools==1.12.0 psutil
 
 python download.py
 
