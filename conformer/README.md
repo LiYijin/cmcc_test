@@ -1,5 +1,9 @@
 ```bash
-#在cmcc_test的目录下进行操作
+# 起conda环境
+conda create -n conformer python=3.8
+conda activate conformer
+
+# 在cmcc_test的目录下进行操作,安装espnet_onnx
 git clone https://github.com/hochen1/espnet_onnx.git
 cd espnet_onnx
 pip install .
@@ -19,12 +23,15 @@ python download.py
 #注意check pth2onnx.py中的所有路径
 python3 pth2onnx.py 
 
-# 修改${HOME}/.cache/espnet_onnx/conformer_test目录下config.yaml配置文件参数，以及修改对应参数中的encoder, ctc, decoder, lm文件路径。
-
-# 修改config.yaml的beam size 为 2
+# 修改${HOME}/.cache/espnet_onnx/conformer_test目录下文件如下：
+#   2   beam_size: 2
+#   8   model_path: /root/.cache/espnet_onnx/conformer_test/full/ctc_24_fp16.onnx
+#  11   model_path: /root/.cache/espnet_onnx/conformer_test/full/xformer_decoder_revise.onnx
+#  37   model_path: /root/.cache/espnet_onnx/conformer_test/full/xformer_encoder_multibatch.onnx
+#  46   model_path: /root/.cache/espnet_onnx/conformer_test/full/transformer_lm_fp16.onnx
 
 #最后要在om_val.py中检查373行的text_value变量，要更改为'/data/data_aishell/transcript/aishell_transcript_v0.8.txt'
 
 #在run.sh脚本中，需要修改数据集路径
-./run.sh
+dataset_path=/dataset/data_aishell/ ./run.sh
 ```
