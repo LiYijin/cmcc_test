@@ -31,7 +31,7 @@
 ```
 ## /dataset
 ```
-dataset/
+/dataset/
 |-- annotations
 |-- annotations_trainval2017.zip
 |-- china-people-daily-ner-corpus
