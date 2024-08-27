@@ -8,8 +8,7 @@ pip install -r requirement.txt
 pip install paddle2onnx
 bash convert.sh
 cd ..
-python3 mix-precision-opt.py
-mkdir -p /root/dbnet-infer
-cp -r ./data/icdar2015/ /root/dbnet-infer/
+mkdir -p model && python3 mix-precision-opt.py
+mkdir -p /root/dbnet-infer && cp -r /dataset/icdar2015/ /root/dbnet-infer/
 bash ./test_dbnet.sh
 ```

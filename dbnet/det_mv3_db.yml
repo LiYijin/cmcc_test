@@ -47,9 +47,9 @@ Metric:
 Eval:
   dataset:
     name: SimpleDataSet
-    data_dir: ./data/icdar2015/ch4_test_images/
+    data_dir: /root/dbnet-infer/icdar2015/ch4_test_images/
     label_file_list:
-      - ./data/icdar2015/test_icdar2015_label.txt
+      - /root/dbnet-infer/icdar2015/test_icdar2015_label.txt
     transforms:
       - DecodeImage: # load image
           img_mode: BGR
