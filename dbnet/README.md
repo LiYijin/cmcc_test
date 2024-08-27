@@ -2,9 +2,8 @@
 conda create --name dbnet python=3.8 --channel https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
 conda activate dbnet
 pip install common tight data prox onnx_graphsurgeon dual
-pip install -r requirement.txt
-cd gen-onnx
-pip install -r requirement.txt
+pip install -r requirements.txt
+cd gen-onnx && pip install -r requirements.txt
 pip install paddle2onnx
 bash convert.sh
 cd ..
