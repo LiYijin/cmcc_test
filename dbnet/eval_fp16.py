@@ -6,7 +6,6 @@ from ppocr.metrics import build_metric
 from ppocr.postprocess import build_post_process
 import onnxruntime as ort
 import numpy as np
-import torch
 from tqdm import tqdm
 
 import numpy as np
