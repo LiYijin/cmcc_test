@@ -1,7 +1,0 @@
-arguments: src/align/align_dataset_mtcnn.py /data/lfw/raw /data/lfw/lfw_mtcnnpy_160 --image_size 160 --margin 32 --random_order --gpu_memory_fraction 0.25
---------------------
-tensorflow version: 1.13.1
---------------------
-git hash: b''
---------------------
-b''
