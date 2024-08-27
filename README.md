@@ -1,6 +1,7 @@
 ## cmcc_test
 准备好 /models和/dataset里的数据
 ## /models
+```
 /models/
 |-- 20180408-102900
 |-- bert-base-chinese-yuan
@@ -27,8 +28,9 @@
         |   |-- comet
         |   `-- wandb
         `-- segment
-
+```
 ## /dataset
+```
 dataset/
 |-- annotations
 |-- annotations_trainval2017.zip
@@ -46,3 +48,4 @@ dataset/
 |-- pairs.txt
 |-- val2017
 `-- val2017.zip
+```
