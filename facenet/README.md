@@ -2,8 +2,6 @@
 
 1. 使用mtcnn预处理lfw数据集
 
-facenet-tf is cloned from https://github.com/davidsandberg/facenet.
-We fix requirements.txt and add preprocess_lfw.sh script
 ```shell
 cd facenet-tf
 conda create -n facenet-mtcnn python=3.5
@@ -14,6 +12,7 @@ pip install opencv-python-headless numpy==1.16.2 scipy==1.2.1
 export PYTHONPATH=./src
 bash preprocess_lfw.sh
 conda deactivate
+cd ../
 ```
 
 2. 将tf模型转为pytorch模型
@@ -44,5 +43,6 @@ conda deactivate
 
 ### Tips:
 
+* facenet-tf 下载自 https://github.com/davidsandberg/facenet 我们修复了requirements.txt，并增加了preprocess_lfw.sh脚本
 * tf pb文件转pytoch pt文件 参考https://github.com/timesler/facenet-pytorch
 * load pt文件生成onnx模型的模型backbone 参考https://github.com/timesler/facenet-pytorch
