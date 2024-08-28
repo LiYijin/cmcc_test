@@ -26,14 +26,14 @@ m.export_from_zip(
     lm_weight=0.3,
 )
 
-mo.ctc_optimizer("/root/.cache/espnet_onnx/conformer_test/full/ctc.onnx", "/root/.cache/espnet_onnx/conformer_test/full/ctc_dynamic.onnx")
-mo.decoder_optimizer("/root/.cache/espnet_onnx/conformer_test/full/xformer_decoder.onnx", "/root/.cache/espnet_onnx/conformer_test/full/xformer_decoder_revise.onnx")
-mo.encoder_optimizer("/root/.cache/espnet_onnx/conformer_test/full/xformer_encoder.onnx", "/root/.cache/espnet_onnx/conformer_test/full/xformer_encoder_multibatch.onnx", 24)
+mo.ctc_optimizer("/root/.cache/espnet_onnx/conformer_test/full/ctc.onnx", "/root/.cache/espnet_onnx/conformer_test/full/ctc.onnx")
+mo.decoder_optimizer("/root/.cache/espnet_onnx/conformer_test/full/xformer_decoder.onnx", "/root/.cache/espnet_onnx/conformer_test/full/xformer_decoder.onnx")
+mo.encoder_optimizer("/root/.cache/espnet_onnx/conformer_test/full/xformer_encoder.onnx", "/root/.cache/espnet_onnx/conformer_test/full/xformer_encoder.onnx", 24)
 
-new_onnx_model = convert_float_to_float16_model_path('/root/.cache/espnet_onnx/conformer_test/full/ctc_dynamic.onnx')
-onnx.save(new_onnx_model, '/root/.cache/espnet_onnx/conformer_test/full/ctc_24_fp16.onnx')
+new_onnx_model = convert_float_to_float16_model_path('/root/.cache/espnet_onnx/conformer_test/full/ctc.onnx')
+onnx.save(new_onnx_model, '/root/.cache/espnet_onnx/conformer_test/full/ctc.onnx')
 
 new_onnx_model = convert_float_to_float16_model_path('/root/.cache/espnet_onnx/conformer_test/full/transformer_lm.onnx')
-onnx.save(new_onnx_model, '/root/.cache/espnet_onnx/conformer_test/full/transformer_lm_fp16.onnx')
+onnx.save(new_onnx_model, '/root/.cache/espnet_onnx/conformer_test/full/transformer_lm.onnx')
 
 

@@ -25,10 +25,6 @@ python3 pth2onnx.py
 
 # 修改${HOME}/.cache/espnet_onnx/conformer_test目录下文件如下：
 #   2   beam_size: 2
-#   8   model_path: /root/.cache/espnet_onnx/conformer_test/full/ctc_24_fp16.onnx
-#  11   model_path: /root/.cache/espnet_onnx/conformer_test/full/xformer_decoder_revise.onnx
-#  37   model_path: /root/.cache/espnet_onnx/conformer_test/full/xformer_encoder_multibatch.onnx
-#  46   model_path: /root/.cache/espnet_onnx/conformer_test/full/transformer_lm_fp16.onnx
 
 #最后要在om_val.py中检查373行的text_value变量，要更改为'/dataset/data_aishell/transcript/aishell_transcript_v0.8.txt'
 
